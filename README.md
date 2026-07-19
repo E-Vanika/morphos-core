@@ -1,2 +1,5 @@
 # morphos-core
-A hyper-variablized, domain-agnostic marketplace and booking engine. Dynamically morphs brand identity, database schemas (JSONB), and its Gemini-powered RAG/MCP AI chatbot instantly via system environment variables. Powered by Next.js, FastAPI, Supabase, and automated zero-cost cloud deployments via Terraform and GitHub Actions.
+
+A domain-agnostic marketplace and booking engine that morphs brand identity and language through environment-driven domain profiles. It demonstrates a Next.js frontend, FastAPI AI-agent service, Supabase Auth/Storage/Postgres/pgvector, Gemini RAG, Docker, Terraform-managed Vercel configuration, and GitHub Actions delivery.
+
+The first showcase is a professional-services booking marketplace. Its agent exposes three product skills: provider discovery, availability lookup, and booking-draft creation. See [the setup guide](docs/SETUP.md) for free-tier account setup and the required GitHub secrets.

@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: morphos-agent-api
+    runtime: docker
+    rootDir: apps/api
+    plan: free
+    healthCheckPath: /health
+    autoDeploy: false
+    envVars:
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false

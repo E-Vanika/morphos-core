@@ -1,0 +1,7 @@
+vercel_team_id    = null
+project_name      = "morphos-core"
+supabase_url      = "https://your-project.supabase.co"
+supabase_anon_key = "your-public-anon-key"
+api_url           = "https://your-render-service.onrender.com"
+site_name         = "Clarity Collective"
+domain_preset     = "professional-services"
