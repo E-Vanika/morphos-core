@@ -1,0 +1,3 @@
+This folder holds static fallback gallery images for the web app.
+Place any permanent, GitHub-hosted images here and reference them from `apps/web/app/page.tsx`.
+![alt text](<Reception haristyle.jpeg>) ![alt text](<bride maid makeup.jpeg>) ![alt text](<pencil art (2).jpeg>) ![alt text](<painting (2).jpeg>) ![alt text](<pencil art.jpeg>) ![alt text](painting.jpeg) ![alt text](<saree draping.jpeg>)![c:\Users\Admin\Downloads\BABY SHOWER.jpeg c:\Users\Admin\Downloads\embroidery wedding aniversary.jpeg c:\Users\Admin\Downloads\embroidery 1st bday.jpeg](<bride hairstyle.jpeg>)
