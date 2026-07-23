@@ -108,7 +108,7 @@ export default function Home() {
     ...fallbackImages,
     ...images.filter(api => !fallbackImages.some(fallback => fallback.src === api.src)),
   ];
-  const displayedServices = services.length
+  const displayedServices: ServiceItem[] = services.length
     ? services
     : brand.prices.map(([name, price]) => ({
         id: name,
