@@ -8,6 +8,16 @@ type GalleryImage = {
   label: string;
 };
 
+type ServiceItem = {
+  id: string;
+  site: "art-craft" | "bridal";
+  name: string;
+  description?: string;
+  price: string;
+  active: boolean;
+  sort_order: number;
+};
+
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 const isBridal = process.env.NEXT_PUBLIC_SITE_KIND === "bridal";
 const brand = isBridal ? {
@@ -35,8 +45,11 @@ const FALLBACK_GALLERY_IMAGES: Record<"craft" | "bridal", GalleryImage[]> = {
 export default function Home() {
   const [status, setStatus] = useState(""); const [submitting, setSubmitting] = useState(false);
   const [images, setImages] = useState<GalleryImage[]>([]); const [galleryMessage, setGalleryMessage] = useState("");
+  const [services, setServices] = useState<ServiceItem[]>([]);
   const fallbackImages = isBridal ? FALLBACK_GALLERY_IMAGES.bridal : FALLBACK_GALLERY_IMAGES.craft;
-  const displayedImages = images.length ? images : fallbackImages;
+  const displayedImages = [...fallbackImages, ...images.filter(api => !fallbackImages.some(fallback => fallback.src === api.src))];
+  const displayedServices = services.length ? services : brand.prices.map(([name, price]) => ({ id: name, site: isBridal ? "bridal" : "art-craft", name, price, active: true, sort_order: 0 }));
+
   useEffect(() => {
     fetch(`${apiUrl}/v1/gallery?site=${isBridal ? "bridal" : "craft"}`)
       .then(async response => response.ok ? response.json() : Promise.reject())
@@ -46,6 +59,13 @@ export default function Home() {
         if (!data.images?.length) setGalleryMessage("Photos will appear here shortly.");
       })
       .catch(() => setGalleryMessage("Gallery is being prepared. Please visit Instagram to see the latest work."));
+
+    fetch(`${apiUrl}/v1/services?site=${isBridal ? "bridal" : "art-craft"}`)
+      .then(async response => response.ok ? response.json() : Promise.reject())
+      .then(data => setServices(data ?? []))
+      .catch(() => {
+        /* keep hard-coded list */
+      });
   }, []);
   async function submitOrder(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); const form = new FormData(event.currentTarget);
@@ -57,7 +77,7 @@ export default function Home() {
   return <main className={isBridal ? "bridal-site" : "craft-site"}>
     <header><a className="brand" href="#top">{brand.name}<span>✦</span></a><nav><a href="#prices">Prices</a><a href="#work">My work</a><a href="#order">Book now</a></nav><a className="outline" href={brand.instagram} target="_blank" rel="noreferrer">Instagram</a></header>
     <section id="top" className="hero"><p className="eyebrow">{brand.eyebrow}</p><h1>{brand.title}</h1><p className="lede">{brand.description}</p><a className="button" href="#order">Request now</a></section>
-    <section id="prices" className="section"><p className="eyebrow">STARTING PRICES</p><h2>Simple, clear<br/>pricing.</h2><div className="price-grid">{brand.prices.map(([name, price]) => <div className="price-card" key={name}><span>{name}</span><strong>{price}</strong></div>)}</div><p className="price-note">Final quote may vary based on custom requirements, materials, date and location.</p></section>
+    <section id="prices" className="section"><p className="eyebrow">STARTING PRICES</p><h2>Simple, clear<br/>pricing.</h2><div className="price-grid">{displayedServices.map(service => <div className="price-card" key={service.id}><span>{service.name}</span><strong>{service.price}</strong><small>{service.description || "Customised service based on your request."}</small></div>)}</div><p className="price-note">Final quote may vary based on custom requirements, materials, date and location.</p></section>
     <section id="work" className="work-section"><div><p className="eyebrow">MY WORK</p><h2>Made for<br/>real moments.</h2><p>Browse recent work and customer creations.</p><a className="text-button" href={brand.instagram} target="_blank" rel="noreferrer">Visit Instagram →</a></div><div className="gallery">{displayedImages.length ? displayedImages.map(image => <a href={brand.instagram} target="_blank" rel="noreferrer" key={image.src}><img src={image.src} alt={`${brand.name} ${image.label}`} title={image.label}/></a>) : <div className={`portfolio-cover ${isBridal ? "bridal-cover" : "craft-cover"}`}><span>{brand.label}</span><small>{galleryMessage || "Photos will appear after upload"}</small></div>}</div></section>
     <section id="order" className="order-section"><div><p className="eyebrow">MAKE AN ENQUIRY</p><h2>Let&apos;s create<br/>something lovely.</h2><p>Send your details and requirements. Your request is saved securely and we will contact you shortly.</p></div><form className="order-form" onSubmit={submitOrder}><label>Service<input value={isBridal ? "Bridal Makeup" : "Art & Craft"} readOnly/></label><label>Your name<input name="name" required placeholder="Your name"/></label><label>Phone / WhatsApp<input name="phone" required placeholder="Your phone number"/></label><label>Event or required date<input name="date" type="date"/></label><label>Tell us what you need<textarea name="details" rows={4} placeholder={brand.details}/></label><button className="button" disabled={submitting}>{submitting ? "Sending…" : "Submit request"}</button>{status && <p className="form-status">{status}</p>}</form></section>
     <footer>{brand.name} · <a href={brand.instagram} target="_blank" rel="noreferrer">Instagram</a></footer><ChatWidget />

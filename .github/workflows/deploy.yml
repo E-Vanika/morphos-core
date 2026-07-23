@@ -26,6 +26,8 @@ jobs:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       MCP_API_KEY: ${{ secrets.MCP_API_KEY }}
       INITIAL_ADMIN_EMAIL: ${{ secrets.INITIAL_ADMIN_EMAIL }}
+      ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
       CRAFTS_BUCKET: ${{ secrets.CRAFTS_BUCKET }}
       BRIDAL_BUCKET: ${{ secrets.BRIDAL_BUCKET }}
       NEXT_PUBLIC_INSTAGRAM_URL: ${{ secrets.NEXT_PUBLIC_INSTAGRAM_URL }}
@@ -46,6 +48,8 @@ jobs:
             "GEMINI_API_KEY=$GEMINI_API_KEY"
             "MCP_API_KEY=$MCP_API_KEY"
             "INITIAL_ADMIN_EMAIL=$INITIAL_ADMIN_EMAIL"
+            "ADMIN_EMAIL=$ADMIN_EMAIL"
+            "ADMIN_PASSWORD=$ADMIN_PASSWORD"
             "CRAFTS_BUCKET=$CRAFTS_BUCKET"
             "BRIDAL_BUCKET=$BRIDAL_BUCKET"
             "DOMAIN_PRESET=professional-services"

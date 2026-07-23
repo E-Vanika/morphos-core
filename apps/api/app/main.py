@@ -1,8 +1,9 @@
 import os
+from base64 import b64decode
 from io import BytesIO
-from typing import Annotated
+from typing import Annotated, Literal
 
-from fastapi import FastAPI, File, Header, HTTPException, UploadFile
+from fastapi import FastAPI, File, Header, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from google import genai
 from pydantic import BaseModel, Field
@@ -33,6 +34,35 @@ class OrderRequest(BaseModel):
     phone: str = Field(min_length=6, max_length=30)
     event_date: str | None = None
     details: str | None = Field(default=None, max_length=2000)
+
+
+class ServiceItem(BaseModel):
+    id: str
+    site: Literal["art-craft", "bridal"]
+    name: str
+    description: str | None = None
+    price: str
+    active: bool = True
+    sort_order: int = 0
+    created_at: str | None = None
+    updated_at: str | None = None
+
+
+class ServiceCreate(BaseModel):
+    site: Literal["art-craft", "bridal"]
+    name: str
+    description: str | None = None
+    price: str
+    active: bool = True
+    sort_order: int = 0
+
+
+class ServiceUpdate(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    price: str | None = None
+    active: bool | None = None
+    sort_order: int | None = None
 
 
 def supabase_client() -> Client:
@@ -78,6 +108,21 @@ def require_mcp_key(key: str | None) -> None:
         raise HTTPException(status_code=401, detail="A valid X-MCP-Key is required.")
 
 
+def require_admin_basic(authorization: str | None) -> None:
+    if not authorization or not authorization.startswith("Basic "):
+        raise HTTPException(status_code=401, detail="Admin credentials are required.")
+    encoded = authorization.removeprefix("Basic ").strip()
+    try:
+        decoded = b64decode(encoded).decode("utf-8")
+        email, password = decoded.split(":", 1)
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid admin credentials.")
+    expected_email = os.getenv("ADMIN_EMAIL", "admin@example.com")
+    expected_password = os.getenv("ADMIN_PASSWORD", "Admin1234!")
+    if email != expected_email or password != expected_password:
+        raise HTTPException(status_code=403, detail="Invalid admin credentials.")
+
+
 def retrieve_context(message: str) -> str:
     try:
         rows = supabase_client().rpc("match_knowledge_chunks", {"query_embedding": embed(message), "match_count": 4}).execute().data
@@ -116,6 +161,58 @@ def chat(request: ChatRequest) -> ChatResponse:
 def create_order(request: OrderRequest) -> dict[str, str]:
     supabase_client().table("order_requests").insert(request.model_dump()).execute()
     return {"status": "received"}
+
+
+@app.get("/api/v1/db-health")
+def db_health() -> dict[str, str]:
+    try:
+        client = supabase_client()
+        client.table("order_requests").select("*", {"limit": 1}).execute()
+    except Exception as error:
+        raise HTTPException(status_code=503, detail=f"Database connection failed: {error}")
+    return {"status": "ok", "db": "connected"}
+
+
+@app.get("/api/v1/services")
+def list_services(site: str | None = Query(None, description="art-craft or bridal")) -> list[ServiceItem]:
+    if site not in {"art-craft", "bridal"}:
+        raise HTTPException(status_code=400, detail="site must be either 'art-craft' or 'bridal'.")
+    result = supabase_client().table("services").select("*").eq("site", site).order("sort_order", {"ascending": True}).execute()
+    services = getattr(result, "data", result) or []
+    return [ServiceItem(**item) for item in services]
+
+
+@app.post("/api/v1/services", response_model=ServiceItem)
+def create_service(service: ServiceCreate, authorization: Annotated[str | None, Header()] = None) -> ServiceItem:
+    require_admin_basic(authorization)
+    result = supabase_client().table("services").insert(service.model_dump()).execute()
+    created = getattr(result, "data", result) or []
+    if not created:
+        raise HTTPException(status_code=500, detail="Could not create service.")
+    return ServiceItem(**created[0])
+
+
+@app.patch("/api/v1/services/{service_id}", response_model=ServiceItem)
+def update_service(service_id: str, service: ServiceUpdate, authorization: Annotated[str | None, Header()] = None) -> ServiceItem:
+    require_admin_basic(authorization)
+    updates = {k: v for k, v in service.model_dump().items() if v is not None}
+    if not updates:
+        raise HTTPException(status_code=400, detail="No updates provided.")
+    result = supabase_client().table("services").update(updates).eq("id", service_id).execute()
+    updated = getattr(result, "data", result) or []
+    if not updated:
+        raise HTTPException(status_code=404, detail="Service not found.")
+    return ServiceItem(**updated[0])
+
+
+@app.delete("/api/v1/services/{service_id}")
+def delete_service(service_id: str, authorization: Annotated[str | None, Header()] = None) -> dict[str, str]:
+    require_admin_basic(authorization)
+    result = supabase_client().table("services").delete().eq("id", service_id).execute()
+    deleted = getattr(result, "data", result) or []
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Service not found.")
+    return {"status": "deleted"}
 
 
 FALLBACK_GALLERY_IMAGES: dict[str, list[str]] = {
