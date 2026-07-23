@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 
-type Message = { role: "assistant" | "user"; text: string };
+type Message = { role: "assistant" | "user"; text: string; sources?: string[] };
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 const isBridal = process.env.NEXT_PUBLIC_SITE_KIND === "bridal";
 const assistantName = isBridal ? "Monika Glam Up assistant" : "Crafts by Vani assistant";
@@ -24,8 +24,14 @@ export function ChatWidget() {
     try {
       const response = await fetch(`${apiUrl}/v1/chat`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: question, domain: isBridal ? "bridal-makeup" : "art-craft" }) });
       if (!response.ok) throw new Error("Chat request failed");
-      const data: { answer?: string } = await response.json();
-      setMessages(current => [...current, { role: "assistant", text: data.answer ?? "I could not generate an answer." }]);
+      const data: { answer?: string; sources?: string[] } = await response.json();
+      const answer = data.answer ?? "I could not generate an answer.";
+      const sources = data.sources ?? [];
+      setMessages(current => [...current, {
+        role: "assistant",
+        text: sources.length ? `${answer} Sources: ${sources.join(", ")}` : answer,
+        sources,
+      }]);
     } catch {
       setMessages(current => [...current, { role: "assistant", text: "I'm temporarily offline. Please try again after the API finishes deploying." }]);
     } finally { setLoading(false); }

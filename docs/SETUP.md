@@ -23,9 +23,7 @@ In **GitHub → repository → Settings → Secrets and variables → Actions**,
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase project → Settings → API → service-role key |
 | `GEMINI_API_KEY` | Google AI Studio API key |
 | `MCP_API_KEY` | A unique, random 32+ character value |
-| `INITIAL_ADMIN_EMAIL` | Email address permitted to upload knowledge |
-| `ADMIN_EMAIL` | Admin username for the backend service editor |
-| `ADMIN_PASSWORD` | Admin password for the backend service editor |
+| `ADMIN_EMAILS` | Comma-separated Supabase Auth email addresses allowed to manage services and knowledge |
 | `CRAFTS_BUCKET` | Exact Supabase bucket ID for Art and Craft images |
 | `BRIDAL_BUCKET` | Exact Supabase bucket ID for Monika Glamup images |
 | `NEXT_PUBLIC_INSTAGRAM_URL` | Full Instagram profile URL, e.g. `https://instagram.com/yourname` |
@@ -42,5 +40,10 @@ Commit and push to `main`. In GitHub Actions, wait for **Deploy portfolio** to s
 1. Open `https://your-project.vercel.app/api/health` — it should return an `ok` status.
 2. Open the Vercel site and send a concierge question.
 3. If you use the protected skills endpoint, send `X-MCP-Key: <MCP_API_KEY>` to `GET /api/v1/skills`.
+4. Check the `X-Request-ID` response header and Vercel function logs when diagnosing a request. API logs include request path, status, and duration but never message content or secrets.
+
+## Administrator access
+
+Create the administrator accounts with Supabase Email Auth, then set their email addresses in the `ADMIN_EMAILS` GitHub secret. Administrative service and knowledge endpoints require `Authorization: Bearer <Supabase access token>`; Basic authentication is not used.
 
 For local Vercel-style development, set the environment variables above in a local `.env` file and run `npx vercel dev`. If you run FastAPI separately on port 8000, set `NEXT_PUBLIC_API_URL=http://localhost:8000/api` in `apps/web/.env.local`.
