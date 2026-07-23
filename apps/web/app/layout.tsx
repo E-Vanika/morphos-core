@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import "./globals.css";
 import "./brand.css";
 
@@ -7,6 +8,6 @@ export const metadata: Metadata = {
   description: "A domain-agnostic booking marketplace powered by configurable AI skills.",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return <html lang="en"><body>{children}</body></html>;
 }

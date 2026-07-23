@@ -18,9 +18,6 @@ type ServiceItem = {
   sort_order: number;
 };
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "/api";
-const isBridal = process.env.NEXT_PUBLIC_SITE_KIND === "bridal";
-
 type Brand = {
   service: string;
   name: string;
@@ -32,6 +29,9 @@ type Brand = {
   details: string;
   prices: [string, string][];
 };
+
+const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "/api";
+const isBridal = process.env.NEXT_PUBLIC_SITE_KIND === "bridal";
 
 const bridalBrand: Brand = {
   service: "bridal-makeup",
