@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, ReactNode, useEffect, useState } from "react";
 import { ChatWidget } from "./components/chat-widget";
 
 type GalleryImage = {
@@ -20,11 +20,65 @@ type ServiceItem = {
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 const isBridal = process.env.NEXT_PUBLIC_SITE_KIND === "bridal";
-const brand = isBridal ? {
-  service: "bridal-makeup", name: "Monika Glam Up", eyebrow: "BRIDAL · ENGAGEMENT · PARTY MAKEUP", title: <>Glow for your<br/><i>special day.</i></>, description: "Bridal makeup and elegant hairstyling, personalised for every celebration.", instagram: "https://www.instagram.com/monika_glamup?igsh=MXV1dXRhMGE1dm1kNQ==", label: "Bridal looks & hairstyling", details: "Function type, event date, location, number of people…", prices: [["Bridal Makeup", "₹15,000"], ["Pre-Bridal Get Ready Package", "₹10,000"], ["Bridesmaid Makeup", "₹4,000"], ["Saree Draping", "₹2,000"], ["Saree Pre-pleating", "₹500"]]
-} : {
-  service: "art-craft", name: "Crafts by Vani", eyebrow: "HANDMADE GIFTS · CUSTOM ART · CREATIVE DETAILS", title: <>Made with<br/><i>heart.</i></>, description: "Custom handmade gifts, portraits, hoops, décor and thoughtful keepsakes.", instagram: "https://www.instagram.com/crafts.by.vani?igsh=MXUxZjE5aWZveHlxZg%3D%3D&utm_source=qr", label: "Custom handmade creations", details: "Occasion, preferred colours, quantity, budget and delivery date…", prices: [["Pencil Art", "₹3,000"], ["Embroidery", "₹2,000"], ["Painting", "₹1,000"], ["Custom work", "Varies by design"]]
+
+type Brand = {
+  service: string;
+  name: string;
+  eyebrow: string;
+  title: ReactNode;
+  description: string;
+  instagram: string;
+  label: string;
+  details: string;
+  prices: [string, string][];
 };
+
+const bridalBrand: Brand = {
+  service: "bridal-makeup",
+  name: "Monika Glam Up",
+  eyebrow: "BRIDAL · ENGAGEMENT · PARTY MAKEUP",
+  title: (
+    <>
+      Glow for your<br />
+      <i>special day.</i>
+    </>
+  ),
+  description: "Bridal makeup and elegant hairstyling, personalised for every celebration.",
+  instagram: "https://www.instagram.com/monika_glamup?igsh=MXV1dXRhMGE1dm1kNQ==",
+  label: "Bridal looks & hairstyling",
+  details: "Function type, event date, location, number of people…",
+  prices: [
+    ["Bridal Makeup", "₹15,000"],
+    ["Pre-Bridal Get Ready Package", "₹10,000"],
+    ["Bridesmaid Makeup", "₹4,000"],
+    ["Saree Draping", "₹2,000"],
+    ["Saree Pre-pleating", "₹500"],
+  ],
+};
+
+const craftBrand: Brand = {
+  service: "art-craft",
+  name: "Crafts by Vani",
+  eyebrow: "HANDMADE GIFTS · CUSTOM ART · CREATIVE DETAILS",
+  title: (
+    <>
+      Made with<br />
+      <i>heart.</i>
+    </>
+  ),
+  description: "Custom handmade gifts, portraits, hoops, décor and thoughtful keepsakes.",
+  instagram: "https://www.instagram.com/crafts.by.vani?igsh=MXUxZjE5aWZveHlxZg%3D%3D&utm_source=qr",
+  label: "Custom handmade creations",
+  details: "Occasion, preferred colours, quantity, budget and delivery date…",
+  prices: [
+    ["Pencil Art", "₹3,000"],
+    ["Embroidery", "₹2,000"],
+    ["Painting", "₹1,000"],
+    ["Custom work", "Varies by design"],
+  ],
+};
+
+const brand: Brand = isBridal ? bridalBrand : craftBrand;
 const whatsappNumber = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "").replace(/\D/g, "");
 
 const FALLBACK_GALLERY_IMAGES: Record<"craft" | "bridal", GalleryImage[]> = {
