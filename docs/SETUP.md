@@ -24,6 +24,8 @@ In **GitHub → repository → Settings → Secrets and variables → Actions**,
 | `GEMINI_API_KEY` | Google AI Studio API key |
 | `MCP_API_KEY` | A unique, random 32+ character value |
 | `INITIAL_ADMIN_EMAIL` | Email address permitted to upload knowledge |
+| `CRAFTS_BUCKET` | Exact Supabase bucket ID for Art and Craft images |
+| `BRIDAL_BUCKET` | Exact Supabase bucket ID for Monika Glamup images |
 | `NEXT_PUBLIC_INSTAGRAM_URL` | Full Instagram profile URL, e.g. `https://instagram.com/yourname` |
 | `NEXT_PUBLIC_WHATSAPP_NUMBER` | WhatsApp number with country code and digits only, e.g. `919876543210` |
 | `NEXT_PUBLIC_ART_IMAGE_URL` | Public Supabase Storage URL for the featured Art & Craft image |
