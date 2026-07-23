@@ -29,7 +29,7 @@ In **GitHub → repository → Settings → Secrets and variables → Actions**,
 | `NEXT_PUBLIC_ART_IMAGE_URL` | Public Supabase Storage URL for the featured Art & Craft image |
 | `NEXT_PUBLIC_BRIDAL_IMAGE_URL` | Public Supabase Storage URL for the featured Bridal Makeup image |
 
-The deploy workflow applies Supabase migrations first, then creates or updates the Vercel project containing the frontend and API. The runtime secrets are passed directly from GitHub Actions and are not committed to the repository.
+The deploy workflow applies Supabase migrations first, then creates or updates two Vercel projects: `crafts-by-vani` and `monika-glamup`. The runtime secrets are passed directly from GitHub Actions and are not committed to the repository.
 
 ## 3. Deploy and verify
 

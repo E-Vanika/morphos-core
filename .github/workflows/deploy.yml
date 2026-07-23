@@ -65,4 +65,11 @@ jobs:
           args=()
           for value in "${runtime_vars[@]}"; do args+=(--env "$value"); done
           for value in "${build_vars[@]}"; do args+=(--build-env "$value"); done
-          npx vercel deploy --prod --yes --name morphos-core --token "$VERCEL_TOKEN" "${args[@]}"
+          deploy_site() {
+            local project_name="$1"
+            local site_kind="$2"
+            rm -rf .vercel
+            npx vercel deploy --prod --yes --name "$project_name" --token "$VERCEL_TOKEN" "${args[@]}" --env "NEXT_PUBLIC_SITE_KIND=$site_kind" --build-env "NEXT_PUBLIC_SITE_KIND=$site_kind"
+          }
+          deploy_site crafts-by-vani craft
+          deploy_site monika-glamup bridal
