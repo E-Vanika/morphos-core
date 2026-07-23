@@ -11,7 +11,7 @@ const providers: Provider[] = [
   { id: "elena-rossi", name: "Elena Rossi", specialty: "Design consulting", price: "$110 / 60 min", availability: "Fri, 09:00" },
 ];
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 
 export default function Home() {
   const [selected, setSelected] = useState<Provider | null>(null);
@@ -33,7 +33,7 @@ export default function Home() {
       const data = await response.json();
       setAnswer(data.answer ?? "The concierge is temporarily unavailable.");
     } catch {
-      setAnswer("The API is offline locally. Start the FastAPI service to use the AI concierge.");
+      setAnswer("The AI concierge is temporarily unavailable. Please try again shortly.");
     } finally { setBusy(false); }
   }
 
@@ -43,6 +43,6 @@ export default function Home() {
     <section id="experts" className="section"><div className="section-heading"><p className="eyebrow">CURATED EXPERTS</p><h2>Made for the work ahead.</h2></div><div className="cards">{providers.map((provider) => <article className="card" key={provider.id}><div className="avatar">{provider.name.split(" ").map(part => part[0]).join("")}</div><p className="specialty">{provider.specialty}</p><h3>{provider.name}</h3><p className="availability">Next: {provider.availability}</p><div className="card-footer"><strong>{provider.price}</strong><button onClick={() => setSelected(provider)}>Book session →</button></div></article>)}</div></section>
     <section id="ai" className="ai-panel"><div><p className="eyebrow">AI CONCIERGE · RAG + SKILLS</p><h2>A useful answer,<br/>not a generic chatbot.</h2><p>It retrieves approved admin knowledge and can use domain skills to find an expert, check availability, and prepare a booking.</p></div><div className="chat"><p className="answer">{answer}</p><form onSubmit={ask}><input aria-label="Ask the concierge" value={message} onChange={event => setMessage(event.target.value)} placeholder="Which coach can help me lead a new team?"/><button disabled={busy}>{busy ? "Thinking…" : "Ask"}</button></form></div></section>
     <section id="how" className="booking"><div><p className="eyebrow">DEMO BOOKING</p><h2>{selected ? "Ready when you are." : "Choose an expert to begin."}</h2><p>{selectedLabel}</p></div><button className="button" disabled={!selected} onClick={() => selected && alert(`Demo payment approved. Your booking with ${selected.name} is ready to confirm.`)}>Simulate payment</button></section>
-    <footer>Built with Next.js, FastAPI, Supabase, Gemini, Docker and GitHub Actions.</footer><ChatWidget />
+    <footer>Built with Next.js, FastAPI, Supabase, Gemini, Vercel and GitHub Actions.</footer><ChatWidget />
   </main>;
 }

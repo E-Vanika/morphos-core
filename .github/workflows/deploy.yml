@@ -3,30 +3,6 @@ on:
   push:
     branches: [main]
 jobs:
-  provision-vercel:
-    runs-on: ubuntu-latest
-    concurrency: terraform-production
-    outputs:
-      project_id: ${{ steps.terraform_outputs.outputs.project_id }}
-    defaults:
-      run:
-        working-directory: infra/terraform
-    env:
-      TF_TOKEN_app_terraform_io: ${{ secrets.HCP_TERRAFORM_TOKEN }}
-      VERCEL_API_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      TF_VAR_supabase_url: ${{ secrets.SUPABASE_URL }}
-      TF_VAR_supabase_anon_key: ${{ secrets.SUPABASE_ANON_KEY }}
-      TF_VAR_api_url: ${{ secrets.RENDER_API_URL }}
-      TF_VAR_vercel_team_id: ${{ secrets.VERCEL_ORG_ID }}
-      TF_VAR_site_name: Clarity Collective
-      TF_VAR_domain_preset: professional-services
-    steps:
-      - uses: actions/checkout@v4
-      - uses: hashicorp/setup-terraform@v3
-      - run: terraform init -input=false -backend-config="organization=${{ secrets.HCP_TERRAFORM_ORGANIZATION }}" -backend-config="workspaces.name=${{ secrets.HCP_TERRAFORM_WORKSPACE }}"
-      - run: terraform apply -auto-approve -input=false
-      - id: terraform_outputs
-        run: echo "project_id=$(terraform output -raw vercel_project_id)" >> "$GITHUB_OUTPUT"
   migrate-database:
     runs-on: ubuntu-latest
     env:
@@ -39,11 +15,11 @@ jobs:
       - run: supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
       - run: supabase db push --linked
   deploy-web:
-    needs: [provision-vercel, migrate-database]
+    needs: migrate-database
     runs-on: ubuntu-latest
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ needs.provision-vercel.outputs.project_id }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -52,9 +28,3 @@ jobs:
       - run: npx vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
       - run: npx vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
       - run: npx vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
-  deploy-api:
-    needs: migrate-database
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger Render deployment
-        run: curl --fail --request POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"

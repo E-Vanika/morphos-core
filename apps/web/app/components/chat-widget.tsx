@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 
 type Message = { role: "assistant" | "user"; text: string };
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 
 export function ChatWidget() {
   const [open, setOpen] = useState(false);

@@ -61,6 +61,13 @@ def require_admin(authorization: str | None) -> str:
     return user.id
 
 
+def require_mcp_key(key: str | None) -> None:
+    """Protect machine-to-machine skill discovery when an MCP key is configured."""
+    configured_key = os.getenv("MCP_API_KEY")
+    if configured_key and key != configured_key:
+        raise HTTPException(status_code=401, detail="A valid X-MCP-Key is required.")
+
+
 def retrieve_context(message: str) -> str:
     try:
         rows = supabase_client().rpc("match_knowledge_chunks", {"query_embedding": embed(message), "match_count": 4}).execute().data
@@ -69,17 +76,18 @@ def retrieve_context(message: str) -> str:
     return "\n\n".join(row["content"] for row in rows if row.get("content"))
 
 
-@app.get("/health")
+@app.get("/api/health")
 def health() -> dict[str, str]:
     return {"status": "ok", "service": "morphos-agent"}
 
 
-@app.get("/v1/skills")
-def skills() -> list[dict[str, str]]:
+@app.get("/api/v1/skills")
+def skills(x_mcp_key: Annotated[str | None, Header()] = None) -> list[dict[str, str]]:
+    require_mcp_key(x_mcp_key)
     return [{"id": skill.id, "description": skill.description, "input_hint": skill.input_hint} for skill in SKILLS]
 
 
-@app.post("/v1/chat", response_model=ChatResponse)
+@app.post("/api/v1/chat", response_model=ChatResponse)
 def chat(request: ChatRequest) -> ChatResponse:
     profile = get_profile(request.domain)
     context = retrieve_context(request.message)
@@ -94,7 +102,7 @@ def chat(request: ChatRequest) -> ChatResponse:
     return ChatResponse(answer=answer, skills_available=[skill.id for skill in SKILLS])
 
 
-@app.post("/v1/admin/documents")
+@app.post("/api/v1/admin/documents")
 async def upload_document(
     file: Annotated[UploadFile, File(...)],
     authorization: Annotated[str | None, Header()] = None,
