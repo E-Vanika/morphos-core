@@ -6,42 +6,28 @@ This project uses one Vercel project for both the Next.js frontend and the FastA
 
 Create free accounts for GitHub, Vercel, Supabase, and Google AI Studio. In Supabase, create one project and enable Email auth. Copy its Project URL, anon/publishable key, project reference ID, and database password. Create a Gemini API key in Google AI Studio.
 
-Import this repository into Vercel as a single project. Leave the Root Directory set to the repository root; the included `vercel.json` builds the web app and deploys the Python API function together.
+No Vercel dashboard configuration is required. GitHub Actions creates and deploys the Vercel project using your Vercel token. The included `vercel.json` builds the web app and deploys the Python API function together.
 
-## 2. Vercel environment variables
-
-In **Vercel → Project → Settings → Environment Variables**, create these values for **Production**, **Preview**, and **Development**:
-
-| Name | Value |
-| --- | --- |
-| `SUPABASE_URL` | Your Supabase Project URL |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase Settings → API → service-role key |
-| `GEMINI_API_KEY` | Google AI Studio API key |
-| `MCP_API_KEY` | A unique, random 32+ character value |
-| `INITIAL_ADMIN_EMAIL` | The email address allowed to upload knowledge |
-| `DOMAIN_PRESET` | `professional-services` |
-| `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase Project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon/publishable key |
-| `NEXT_PUBLIC_API_URL` | `/api` |
-
-`SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY`, and `MCP_API_KEY` are private server-side credentials. Never put them in a browser-prefixed `NEXT_PUBLIC_` variable or in GitHub repository secrets.
-
-## 3. GitHub Actions secrets
+## 2. GitHub Actions secrets
 
 In **GitHub → repository → Settings → Secrets and variables → Actions**, set only:
 
 | Name | Where to get it |
 | --- | --- |
 | `VERCEL_TOKEN` | Vercel account settings → Tokens |
-| `VERCEL_ORG_ID` | Vercel project → Settings → General |
-| `VERCEL_PROJECT_ID` | Vercel project → Settings → General |
 | `SUPABASE_ACCESS_TOKEN` | Supabase dashboard → Account → Access Tokens |
 | `SUPABASE_PROJECT_REF` | Supabase project → Settings → General → Reference ID |
 | `SUPABASE_DB_PASSWORD` | Password selected while creating the Supabase project |
+| `SUPABASE_URL` | Supabase project → Settings → API → Project URL |
+| `SUPABASE_ANON_KEY` | Supabase project → Settings → API → anon/publishable key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase project → Settings → API → service-role key |
+| `GEMINI_API_KEY` | Google AI Studio API key |
+| `MCP_API_KEY` | A unique, random 32+ character value |
+| `INITIAL_ADMIN_EMAIL` | Email address permitted to upload knowledge |
 
-The deploy workflow applies Supabase migrations first, then deploys the same Vercel project containing the frontend and API.
+The deploy workflow applies Supabase migrations first, then creates or updates the Vercel project containing the frontend and API. The runtime secrets are passed directly from GitHub Actions and are not committed to the repository.
 
-## 4. Deploy and verify
+## 3. Deploy and verify
 
 Commit and push to `main`. In GitHub Actions, wait for **Deploy portfolio** to succeed. Then verify:
 

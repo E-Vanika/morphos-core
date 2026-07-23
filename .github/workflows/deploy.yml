@@ -2,6 +2,7 @@ name: Deploy portfolio
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 jobs:
   migrate-database:
     runs-on: ubuntu-latest
@@ -11,20 +12,45 @@ jobs:
       SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
-      - uses: supabase/setup-cli@v1
+      - uses: supabase/setup-cli@v2
       - run: supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
       - run: supabase db push --linked
-  deploy-web:
+  deploy-vercel:
     needs: migrate-database
     runs-on: ubuntu-latest
     env:
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      MCP_API_KEY: ${{ secrets.MCP_API_KEY }}
+      INITIAL_ADMIN_EMAIL: ${{ secrets.INITIAL_ADMIN_EMAIL }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: npm install
-      - run: npx vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-      - run: npx vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-      - run: npx vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy application to Vercel
+        run: |
+          runtime_vars=(
+            "SUPABASE_URL=$SUPABASE_URL"
+            "SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY"
+            "SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY"
+            "GEMINI_API_KEY=$GEMINI_API_KEY"
+            "MCP_API_KEY=$MCP_API_KEY"
+            "INITIAL_ADMIN_EMAIL=$INITIAL_ADMIN_EMAIL"
+            "DOMAIN_PRESET=professional-services"
+            "NEXT_PUBLIC_SUPABASE_URL=$SUPABASE_URL"
+            "NEXT_PUBLIC_SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY"
+            "NEXT_PUBLIC_API_URL=/api"
+          )
+          build_vars=(
+            "NEXT_PUBLIC_SUPABASE_URL=$SUPABASE_URL"
+            "NEXT_PUBLIC_SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY"
+            "NEXT_PUBLIC_API_URL=/api"
+          )
+          args=()
+          for value in "${runtime_vars[@]}"; do args+=(--env "$value"); done
+          for value in "${build_vars[@]}"; do args+=(--build-env "$value"); done
+          npx vercel deploy --prod --yes --name morphos-core --token "$VERCEL_TOKEN" "${args[@]}"
