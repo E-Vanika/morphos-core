@@ -38,8 +38,10 @@ class OrderRequest(BaseModel):
 def supabase_client() -> Client:
     url = os.getenv("SUPABASE_URL")
     key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-    if not url or not key:
-        raise HTTPException(status_code=503, detail="Supabase is not configured.")
+    if not url:
+        raise HTTPException(status_code=503, detail="Supabase URL is missing. Set SUPABASE_URL in the environment.")
+    if not key:
+        raise HTTPException(status_code=503, detail="Supabase service role key is missing. Set SUPABASE_SERVICE_ROLE_KEY in the environment.")
     return create_client(url, key)
 
 
