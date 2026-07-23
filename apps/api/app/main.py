@@ -156,6 +156,14 @@ def gallery(site: str) -> dict[str, list[str]]:
             images.append(public_url)
     if not images:
         images = FALLBACK_GALLERY_IMAGES.get(site, [])
+    return {"images": images}
+
+
+@app.post("/api/v1/admin/documents")
+async def upload_document(
+    file: Annotated[UploadFile, File(...)],
+    authorization: Annotated[str | None, Header()] = None,
+) -> dict[str, str]:
     if file.content_type not in {"text/plain", "text/markdown", "application/pdf"}:
         raise HTTPException(status_code=415, detail="Only TXT, Markdown, and PDF documents are accepted.")
     if not file.filename:
