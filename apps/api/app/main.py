@@ -118,13 +118,11 @@ def create_order(request: OrderRequest) -> dict[str, str]:
 
 @app.get("/api/v1/gallery")
 def gallery(site: str) -> dict[str, list[str]]:
-    bucket = os.getenv("BRIDAL_BUCKET") if site == "bridal" else os.getenv("CRAFTS_BUCKET")
-    if not bucket:
-        raise HTTPException(status_code=503, detail="Gallery bucket is not configured.")
+    bucket = os.getenv("BRIDAL_BUCKET", "Monika glamup") if site == "bridal" else os.getenv("CRAFTS_BUCKET", "Art and craft")
     storage = supabase_client().storage.from_(bucket)
-    files = storage.list()
+    files = storage.list("", {"limit": 100})
     image_extensions = (".jpg", ".jpeg", ".png", ".webp")
-    images = [storage.get_public_url(item["name"]) for item in files if item.get("name", "").lower().endswith(image_extensions)]
+    images = [storage.get_public_url(item["name"]) for item in files if isinstance(item, dict) and item.get("name", "").lower().endswith(image_extensions)]
     return {"images": images}
 
 
