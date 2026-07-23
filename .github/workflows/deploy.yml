@@ -26,6 +26,10 @@ jobs:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       MCP_API_KEY: ${{ secrets.MCP_API_KEY }}
       INITIAL_ADMIN_EMAIL: ${{ secrets.INITIAL_ADMIN_EMAIL }}
+      NEXT_PUBLIC_INSTAGRAM_URL: ${{ secrets.NEXT_PUBLIC_INSTAGRAM_URL }}
+      NEXT_PUBLIC_WHATSAPP_NUMBER: ${{ secrets.NEXT_PUBLIC_WHATSAPP_NUMBER }}
+      NEXT_PUBLIC_ART_IMAGE_URL: ${{ secrets.NEXT_PUBLIC_ART_IMAGE_URL }}
+      NEXT_PUBLIC_BRIDAL_IMAGE_URL: ${{ secrets.NEXT_PUBLIC_BRIDAL_IMAGE_URL }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -44,11 +48,19 @@ jobs:
             "NEXT_PUBLIC_SUPABASE_URL=$SUPABASE_URL"
             "NEXT_PUBLIC_SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY"
             "NEXT_PUBLIC_API_URL=/api"
+            "NEXT_PUBLIC_INSTAGRAM_URL=$NEXT_PUBLIC_INSTAGRAM_URL"
+            "NEXT_PUBLIC_WHATSAPP_NUMBER=$NEXT_PUBLIC_WHATSAPP_NUMBER"
+            "NEXT_PUBLIC_ART_IMAGE_URL=$NEXT_PUBLIC_ART_IMAGE_URL"
+            "NEXT_PUBLIC_BRIDAL_IMAGE_URL=$NEXT_PUBLIC_BRIDAL_IMAGE_URL"
           )
           build_vars=(
             "NEXT_PUBLIC_SUPABASE_URL=$SUPABASE_URL"
             "NEXT_PUBLIC_SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY"
             "NEXT_PUBLIC_API_URL=/api"
+            "NEXT_PUBLIC_INSTAGRAM_URL=$NEXT_PUBLIC_INSTAGRAM_URL"
+            "NEXT_PUBLIC_WHATSAPP_NUMBER=$NEXT_PUBLIC_WHATSAPP_NUMBER"
+            "NEXT_PUBLIC_ART_IMAGE_URL=$NEXT_PUBLIC_ART_IMAGE_URL"
+            "NEXT_PUBLIC_BRIDAL_IMAGE_URL=$NEXT_PUBLIC_BRIDAL_IMAGE_URL"
           )
           args=()
           for value in "${runtime_vars[@]}"; do args+=(--env "$value"); done

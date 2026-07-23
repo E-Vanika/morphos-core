@@ -27,6 +27,14 @@ class ChatResponse(BaseModel):
     skills_available: list[str]
 
 
+class OrderRequest(BaseModel):
+    service: str = Field(pattern="^(art-craft|bridal-makeup)$")
+    customer_name: str = Field(min_length=2, max_length=100)
+    phone: str = Field(min_length=6, max_length=30)
+    event_date: str | None = None
+    details: str | None = Field(default=None, max_length=2000)
+
+
 def supabase_client() -> Client:
     url = os.getenv("SUPABASE_URL")
     key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
@@ -100,6 +108,12 @@ def chat(request: ChatRequest) -> ChatResponse:
     else:
         answer = f"I am the {profile.assistant_name}. Configure Gemini and upload knowledge to answer specific questions."
     return ChatResponse(answer=answer, skills_available=[skill.id for skill in SKILLS])
+
+
+@app.post("/api/v1/orders")
+def create_order(request: OrderRequest) -> dict[str, str]:
+    supabase_client().table("order_requests").insert(request.model_dump()).execute()
+    return {"status": "received"}
 
 
 @app.post("/api/v1/admin/documents")

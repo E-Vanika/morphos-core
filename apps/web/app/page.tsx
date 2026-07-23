@@ -1,48 +1,39 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useState } from "react";
 import { ChatWidget } from "./components/chat-widget";
 
-type Provider = { id: string; name: string; specialty: string; price: string; availability: string };
-
-const providers: Provider[] = [
-  { id: "maya-chen", name: "Maya Chen", specialty: "Leadership coaching", price: "$95 / 45 min", availability: "Tomorrow, 10:00" },
-  { id: "samir-patel", name: "Samir Patel", specialty: "Career strategy", price: "$75 / 45 min", availability: "Thu, 14:30" },
-  { id: "elena-rossi", name: "Elena Rossi", specialty: "Design consulting", price: "$110 / 60 min", availability: "Fri, 09:00" },
+type Service = "art-craft" | "bridal-makeup";
+const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "/api";
+const instagramUrl = process.env.NEXT_PUBLIC_INSTAGRAM_URL ?? "#";
+const whatsappNumber = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "").replace(/\D/g, "");
+const services: { id: Service; label: string; description: string; image?: string }[] = [
+  { id: "art-craft", label: "Art & Craft", description: "Handmade gifts, custom décor, return gifts and creative workshops.", image: process.env.NEXT_PUBLIC_ART_IMAGE_URL },
+  { id: "bridal-makeup", label: "Bridal Makeup", description: "Bridal, engagement and party makeup with a look planned around you.", image: process.env.NEXT_PUBLIC_BRIDAL_IMAGE_URL },
 ];
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "/api";
-
 export default function Home() {
-  const [selected, setSelected] = useState<Provider | null>(null);
-  const [message, setMessage] = useState("");
-  const [answer, setAnswer] = useState("Ask the concierge about services, availability, or how booking works.");
-  const [busy, setBusy] = useState(false);
-  const name = process.env.NEXT_PUBLIC_SITE_NAME ?? "Clarity Collective";
-  const selectedLabel = useMemo(() => selected ? `${selected.name} — ${selected.specialty}` : "No provider selected", [selected]);
-
-  async function ask(event: FormEvent) {
-    event.preventDefault();
-    if (!message.trim()) return;
-    setBusy(true);
+  const [service, setService] = useState<Service>("art-craft");
+  const [status, setStatus] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  function chooseService(value: Service) { setService(value); document.querySelector("#order")?.scrollIntoView({ behavior: "smooth" }); }
+  async function submitOrder(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); const form = new FormData(event.currentTarget);
+    const payload = { service, customer_name: String(form.get("name") ?? ""), phone: String(form.get("phone") ?? ""), event_date: String(form.get("date") ?? "") || null, details: String(form.get("details") ?? "") || null };
+    setSubmitting(true); setStatus("");
     try {
-      const response = await fetch(`${apiUrl}/v1/chat`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, domain: process.env.NEXT_PUBLIC_DOMAIN_PRESET ?? "professional-services" }),
-      });
-      const data = await response.json();
-      setAnswer(data.answer ?? "The concierge is temporarily unavailable.");
-    } catch {
-      setAnswer("The AI concierge is temporarily unavailable. Please try again shortly.");
-    } finally { setBusy(false); }
+      const response = await fetch(`${apiUrl}/v1/orders`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      if (!response.ok) throw new Error("Order request failed");
+      setStatus("Request received — we will contact you shortly."); event.currentTarget.reset();
+      if (whatsappNumber) { const text = encodeURIComponent(`Hello! I submitted a ${services.find(item => item.id === service)?.label} request. Name: ${payload.customer_name}.`); window.open(`https://wa.me/${whatsappNumber}?text=${text}`, "_blank", "noopener,noreferrer"); }
+    } catch { setStatus("Could not submit right now. Please message us on Instagram."); } finally { setSubmitting(false); }
   }
-
   return <main>
-    <header><a className="brand" href="#top">{name}<span>●</span></a><nav><a href="#experts">Experts</a><a href="#how">How it works</a><a href="#ai">AI concierge</a></nav><button className="outline">Sign in</button></header>
-    <section id="top" className="hero"><p className="eyebrow">CONFIGURABLE PROFESSIONAL SERVICES</p><h1>Find the right<br/><i>next step.</i></h1><p className="lede">Book a focused session with an independent expert, supported by an AI concierge that understands the service catalogue.</p><a className="button" href="#experts">Browse experts</a></section>
-    <section id="experts" className="section"><div className="section-heading"><p className="eyebrow">CURATED EXPERTS</p><h2>Made for the work ahead.</h2></div><div className="cards">{providers.map((provider) => <article className="card" key={provider.id}><div className="avatar">{provider.name.split(" ").map(part => part[0]).join("")}</div><p className="specialty">{provider.specialty}</p><h3>{provider.name}</h3><p className="availability">Next: {provider.availability}</p><div className="card-footer"><strong>{provider.price}</strong><button onClick={() => setSelected(provider)}>Book session →</button></div></article>)}</div></section>
-    <section id="ai" className="ai-panel"><div><p className="eyebrow">AI CONCIERGE · RAG + SKILLS</p><h2>A useful answer,<br/>not a generic chatbot.</h2><p>It retrieves approved admin knowledge and can use domain skills to find an expert, check availability, and prepare a booking.</p></div><div className="chat"><p className="answer">{answer}</p><form onSubmit={ask}><input aria-label="Ask the concierge" value={message} onChange={event => setMessage(event.target.value)} placeholder="Which coach can help me lead a new team?"/><button disabled={busy}>{busy ? "Thinking…" : "Ask"}</button></form></div></section>
-    <section id="how" className="booking"><div><p className="eyebrow">DEMO BOOKING</p><h2>{selected ? "Ready when you are." : "Choose an expert to begin."}</h2><p>{selectedLabel}</p></div><button className="button" disabled={!selected} onClick={() => selected && alert(`Demo payment approved. Your booking with ${selected.name} is ready to confirm.`)}>Simulate payment</button></section>
-    <footer>Built with Next.js, FastAPI, Supabase, Gemini, Vercel and GitHub Actions.</footer><ChatWidget />
+    <header><a className="brand" href="#top">Your Studio<span>✦</span></a><nav><a href="#services">Services</a><a href="#work">My work</a><a href="#order">Order</a></nav><a className="outline" href={instagramUrl} target="_blank" rel="noreferrer">Instagram</a></header>
+    <section id="top" className="hero"><p className="eyebrow">CUSTOM CREATIONS · BEAUTY FOR YOUR BIG DAY</p><h1>Made with<br/><i>care for you.</i></h1><p className="lede">Choose handmade Art & Craft for thoughtful moments, or Bridal Makeup for your most memorable one.</p><a className="button" href="#services">Explore services</a></section>
+    <section id="services" className="section"><p className="eyebrow">WHAT I OFFER</p><h2>Two services.<br/>One personal touch.</h2><div className="service-grid">{services.map(item => <article className="service-card" key={item.id}><div className={`service-image ${item.id}`} style={item.image ? { backgroundImage: `url(${item.image})` } : undefined}><span>{item.image ? "" : item.id === "art-craft" ? "Custom handmade details" : "Your bridal glow"}</span></div><p className="eyebrow">{item.label}</p><h3>{item.label}</h3><p>{item.description}</p><button className="text-button" onClick={() => chooseService(item.id)}>Request this service →</button></article>)}</div></section>
+    <section id="work" className="work-section"><div><p className="eyebrow">PORTFOLIO</p><h2>See more of<br/>my work.</h2><p>Upload your best Art & Craft and Bridal Makeup photos to Supabase, then add their public links in GitHub Secrets. Your two featured images will appear above.</p></div><a className="instagram-card" href={instagramUrl} target="_blank" rel="noreferrer"><span>Follow along</span><strong>@yourinstagram</strong><small>Open Instagram ↗</small></a></section>
+    <section id="order" className="order-section"><div><p className="eyebrow">START YOUR REQUEST</p><h2>Tell me what<br/>you have in mind.</h2><p>Submit your details. If WhatsApp is configured, you will also be taken there to send a quick confirmation.</p></div><form className="order-form" onSubmit={submitOrder}><label>Service<select value={service} onChange={event => setService(event.target.value as Service)}><option value="art-craft">Art & Craft</option><option value="bridal-makeup">Bridal Makeup</option></select></label><label>Your name<input name="name" required placeholder="Your name"/></label><label>Phone / WhatsApp<input name="phone" required placeholder="Your phone number"/></label><label>Event or required date<input name="date" type="date"/></label><label>What would you like?<textarea name="details" rows={4} placeholder="Colours, occasion, number of people, budget…"/></label><button className="button" disabled={submitting}>{submitting ? "Sending…" : "Submit request"}</button>{status && <p className="form-status">{status}</p>}</form></section>
+    <footer>Art & Craft · Bridal Makeup · <a href={instagramUrl} target="_blank" rel="noreferrer">Instagram</a></footer><ChatWidget />
   </main>;
 }

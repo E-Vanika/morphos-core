@@ -24,6 +24,10 @@ In **GitHub → repository → Settings → Secrets and variables → Actions**,
 | `GEMINI_API_KEY` | Google AI Studio API key |
 | `MCP_API_KEY` | A unique, random 32+ character value |
 | `INITIAL_ADMIN_EMAIL` | Email address permitted to upload knowledge |
+| `NEXT_PUBLIC_INSTAGRAM_URL` | Full Instagram profile URL, e.g. `https://instagram.com/yourname` |
+| `NEXT_PUBLIC_WHATSAPP_NUMBER` | WhatsApp number with country code and digits only, e.g. `919876543210` |
+| `NEXT_PUBLIC_ART_IMAGE_URL` | Public Supabase Storage URL for the featured Art & Craft image |
+| `NEXT_PUBLIC_BRIDAL_IMAGE_URL` | Public Supabase Storage URL for the featured Bridal Makeup image |
 
 The deploy workflow applies Supabase migrations first, then creates or updates the Vercel project containing the frontend and API. The runtime secrets are passed directly from GitHub Actions and are not committed to the repository.
 
