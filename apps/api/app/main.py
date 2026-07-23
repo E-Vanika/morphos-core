@@ -116,6 +116,22 @@ def create_order(request: OrderRequest) -> dict[str, str]:
     return {"status": "received"}
 
 
+FALLBACK_GALLERY_IMAGES: dict[str, list[str]] = {
+    "craft": [
+        "https://frmhbxqxbdyfvatubvul.supabase.co/storage/v1/object/sign/Art%20and%20craft/WhatsApp%20Image%202026-07-23%20at%205.31.17%20PM%20(1).jpeg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8xNjVmNDQ2Ni0zMDg0LTQyYjUtODE1Ny1jMWFlMjIzMDQ4ZDkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJBcnQgYW5kIGNyYWZ0L1doYXRzQXBwIEltYWdlIDIwMjYtMDctMjMgYXQgNS4zMS4xNyBQTSAoMSkuanBlZyIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODQ4MTM0NTksImV4cCI6MTgxNjM0OTQ1OX0.OlOsEWXng27pPVtIWJ8N3a1mIqD94wWaSNidqk9sb68",
+        "https://frmhbxqxbdyfvatubvul.supabase.co/storage/v1/object/sign/Art%20and%20craft/WhatsApp%20Image%202026-07-23%20at%205.31.17%20PM.jpeg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8xNjVmNDQ2Ni0zMDg0LTQyYjUtODE1Ny1jMWFlMjIzMDQ4ZDkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJBcnQgYW5kIGNyYWZ0L1doYXRzQXBwIEltYWdlIDIwMjYtMDctMjMgYXQgNS4zMS4xNyBQTS5qcGVnIiwic2NvcGUiOiJkb3dubG9hZCIsImlhdCI6MTc4NDgxMzUyNywiZXhwIjoxODE2MzQ5NTI3fQ.bYmtbUW9uqD7K2glY_7IgkDCWFRi79tmIVrY0eQn7F0",
+        "https://frmhbxqxbdyfvatubvul.supabase.co/storage/v1/object/sign/Art%20and%20craft/WhatsApp%20Image%202026-07-23%20at%205.40.21%20PM.jpeg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8xNjVmNDQ2Ni0zMDg0LTQyYjUtODE1Ny1jMWFlMjIzMDQ4ZDkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJBcnQgYW5kIGNyYWZ0L1doYXRzQXBwIEltYWdlIDIwMjYtMDctMjMgYXQgNS40MC4yMSBQTS5qcGVnIiwic2NvcGUiOiJkb3dubG9hZCIsImlhdCI6MTc4NDgxMzU0NiwiZXhwIjoxODE2MzQ5NTQ2fQ.97vfZ1qaH8T2TQXCQVqzWOQGH4ZjRZLiG6jooGD1ifM",
+        "https://frmhbxqxbdyfvatubvul.supabase.co/storage/v1/object/sign/Art%20and%20craft/WhatsApp%20Image%202026-07-23%20at%205.40.22%20PM.jpeg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8xNjVmNDQ2Ni0zMDg0LTQyYjUtODE1Ny1jMWFlMjIzMDQ4ZDkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJBcnQgYW5kIGNyYWZ0L1doYXRzQXBwIEltYWdlIDIwMjYtMDctMjMgYXQgNS40MC4yMiBQTS5qcGVnIiwic2NvcGUiOiJkb3dubG9hZCIsImlhdCI6MTc4NDgxMzU3MywiZXhwIjoxODE2MzQ5NTczfQ.VNoQeOSHluvq5sts7ZfL5VFhvXqNjospoW25_GXA4pM",
+    ],
+    "bridal": [
+        "https://frmhbxqxbdyfvatubvul.supabase.co/storage/v1/object/public/Monika%20glamup/WhatsApp%20Image%202026-07-23%20at%205.35.01%20PM.jpeg",
+        "https://frmhbxqxbdyfvatubvul.supabase.co/storage/v1/object/public/Monika%20glamup/WhatsApp%20Image%202026-07-23%20at%205.35.02%20PM%20(1).jpeg",
+        "https://frmhbxqxbdyfvatubvul.supabase.co/storage/v1/object/public/Monika%20glamup/WhatsApp%20Image%202026-07-23%20at%205.35.02%20PM.jpeg",
+        "https://frmhbxqxbdyfvatubvul.supabase.co/storage/v1/object/public/Monika%20glamup/WhatsApp%20Image%202026-07-23%20at%205.38.39%20PM%20(1).jpeg",
+    ],
+}
+
+
 @app.get("/api/v1/gallery")
 def gallery(site: str) -> dict[str, list[str]]:
     bucket = os.getenv("BRIDAL_BUCKET", "Monika glamup") if site == "bridal" else os.getenv("CRAFTS_BUCKET", "Art and craft")
@@ -138,14 +154,8 @@ def gallery(site: str) -> dict[str, list[str]]:
             public_url = str(public_data)
         if public_url:
             images.append(public_url)
-    return {"images": images}
-
-
-@app.post("/api/v1/admin/documents")
-async def upload_document(
-    file: Annotated[UploadFile, File(...)],
-    authorization: Annotated[str | None, Header()] = None,
-) -> dict[str, str]:
+    if not images:
+        images = FALLBACK_GALLERY_IMAGES.get(site, [])
     if file.content_type not in {"text/plain", "text/markdown", "application/pdf"}:
         raise HTTPException(status_code=415, detail="Only TXT, Markdown, and PDF documents are accepted.")
     if not file.filename:
