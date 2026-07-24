@@ -91,10 +91,6 @@ const FALLBACK_GALLERY_IMAGES: Record<"craft" | "bridal", GalleryImage[]> = {
       src: "https://frmhbxqxbdyfvatubvul.supabase.co/storage/v1/object/public/Art%20and%20craft/embroidery%201st%20bday.jpeg",
       label: "Embroidery 1st birthday",
     },
-    {
-      src: "https://frmhbxqxbdyfvatubvul.supabase.co/storage/v1/object/public/Art%20and%20craft/embroidery%20wedding%20aniversary.jpeg",
-      label: "Embroidery wedding anniversary",
-    },
   ],
   bridal: [
     { src: "/gallery/bridal-bridesmaid-makeup.jpeg", label: "Bridesmaid makeup" },
