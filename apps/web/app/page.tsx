@@ -87,6 +87,14 @@ const FALLBACK_GALLERY_IMAGES: Record<"craft" | "bridal", GalleryImage[]> = {
     { src: "/gallery/painting-landscape.jpeg", label: "Painting landscape" },
     { src: "/gallery/pencil-art-cryptography.jpeg", label: "Pencil art cryptography" },
     { src: "/gallery/painting-portrait.jpeg", label: "Painting portrait" },
+    {
+      src: "https://frmhbxqxbdyfvatubvul.supabase.co/storage/v1/object/public/Art%20and%20craft/embroidery%201st%20bday.jpeg",
+      label: "Embroidery 1st birthday",
+    },
+    {
+      src: "https://frmhbxqxbdyfvatubvul.supabase.co/storage/v1/object/public/Art%20and%20craft/embroidery%20wedding%20aniversary.jpeg",
+      label: "Embroidery wedding anniversary",
+    },
   ],
   bridal: [
     { src: "/gallery/bridal-bridesmaid-makeup.jpeg", label: "Bridesmaid makeup" },
