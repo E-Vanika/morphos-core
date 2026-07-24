@@ -4,6 +4,13 @@
 
 Morphos Core dynamically adapts its brand identity, database schemas, and AI-powered capabilities through simple environment variable configuration. No code changes required—transform from one industry vertical to another with a single deployment.
 
+**📖 Documentation:**
+- [**🚀 QUICKSTART** - Deploy in 15 minutes](docs/QUICKSTART.md)
+- [**⚙️ SETUP** - Detailed deployment guide](docs/SETUP.md)
+- [**🆘 TROUBLESHOOTING** - Common issues & solutions](docs/TROUBLESHOOTING.md)
+- [**� DEVOPS** - Infrastructure & deployment reference](docs/DEVOPS.md)
+- [**�📘 Full README** - Complete documentation (this page)](README.md)
+
 ## 🎯 Key Features
 
 - **Domain-Agnostic Architecture**: One codebase powers multiple marketplace verticals (services, rentals, bookings, beauty & wellness, etc.)
