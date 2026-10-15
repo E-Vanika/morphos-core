@@ -4,34 +4,16 @@ on:
     branches: [main]
   workflow_dispatch:
 jobs:
-  migrate-database:
-    runs-on: ubuntu-latest
-    env:
-      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
-      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: supabase/setup-cli@v2
-      - run: supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
-      - run: supabase db push --linked
   deploy-vercel:
-    needs: migrate-database
     runs-on: ubuntu-latest
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       MCP_API_KEY: ${{ secrets.MCP_API_KEY }}
-      ADMIN_EMAILS: ${{ secrets.ADMIN_EMAILS }}
-      CRAFTS_BUCKET: ${{ secrets.CRAFTS_BUCKET }}
-      BRIDAL_BUCKET: ${{ secrets.BRIDAL_BUCKET }}
       NEXT_PUBLIC_INSTAGRAM_URL: ${{ secrets.NEXT_PUBLIC_INSTAGRAM_URL }}
-      NEXT_PUBLIC_WHATSAPP_NUMBER: ${{ secrets.NEXT_PUBLIC_WHATSAPP_NUMBER }}
-      NEXT_PUBLIC_ART_IMAGE_URL: ${{ secrets.NEXT_PUBLIC_ART_IMAGE_URL }}
-      NEXT_PUBLIC_BRIDAL_IMAGE_URL: ${{ secrets.NEXT_PUBLIC_BRIDAL_IMAGE_URL }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      GOOGLE_SHEETS_WEBHOOK_URL: ${{ secrets.GOOGLE_SHEETS_WEBHOOK_URL }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -40,32 +22,19 @@ jobs:
       - name: Deploy application to Vercel
         run: |
           runtime_vars=(
-            "SUPABASE_URL=$SUPABASE_URL"
-            "SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY"
-            "SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY"
             "GEMINI_API_KEY=$GEMINI_API_KEY"
             "MCP_API_KEY=$MCP_API_KEY"
-            "ADMIN_EMAILS=$ADMIN_EMAILS"
             "LOG_LEVEL=INFO"
-            "CRAFTS_BUCKET=$CRAFTS_BUCKET"
-            "BRIDAL_BUCKET=$BRIDAL_BUCKET"
+            "TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN"
+            "TELEGRAM_CHAT_ID=$TELEGRAM_CHAT_ID"
+            "GOOGLE_SHEETS_WEBHOOK_URL=$GOOGLE_SHEETS_WEBHOOK_URL"
             "DOMAIN_PRESET=professional-services"
-            "NEXT_PUBLIC_SUPABASE_URL=$SUPABASE_URL"
-            "NEXT_PUBLIC_SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY"
             "NEXT_PUBLIC_API_URL=/api"
             "NEXT_PUBLIC_INSTAGRAM_URL=$NEXT_PUBLIC_INSTAGRAM_URL"
-            "NEXT_PUBLIC_WHATSAPP_NUMBER=$NEXT_PUBLIC_WHATSAPP_NUMBER"
-            "NEXT_PUBLIC_ART_IMAGE_URL=$NEXT_PUBLIC_ART_IMAGE_URL"
-            "NEXT_PUBLIC_BRIDAL_IMAGE_URL=$NEXT_PUBLIC_BRIDAL_IMAGE_URL"
           )
           build_vars=(
-            "NEXT_PUBLIC_SUPABASE_URL=$SUPABASE_URL"
-            "NEXT_PUBLIC_SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY"
             "NEXT_PUBLIC_API_URL=/api"
             "NEXT_PUBLIC_INSTAGRAM_URL=$NEXT_PUBLIC_INSTAGRAM_URL"
-            "NEXT_PUBLIC_WHATSAPP_NUMBER=$NEXT_PUBLIC_WHATSAPP_NUMBER"
-            "NEXT_PUBLIC_ART_IMAGE_URL=$NEXT_PUBLIC_ART_IMAGE_URL"
-            "NEXT_PUBLIC_BRIDAL_IMAGE_URL=$NEXT_PUBLIC_BRIDAL_IMAGE_URL"
           )
           args=()
           for value in "${runtime_vars[@]}"; do args+=(--env "$value"); done

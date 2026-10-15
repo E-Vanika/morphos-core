@@ -1,3 +1,7 @@
+# Legacy deployment notes
+
+> This document describes the earlier Supabase-backed configuration and is retained only for historical reference. For the current Google Sheets-based Monika Glam Up deployment, use the root [README](../README.md). Do not add the old WhatsApp or Supabase database secrets unless you intentionally restore legacy API routes.
+
 # Morphos deployment checklist
 
 This project uses one Vercel project for both the Next.js frontend and the FastAPI API. The API is served on the same domain under `/api`, so Render and Terraform are not required.

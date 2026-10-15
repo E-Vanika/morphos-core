@@ -1,620 +1,234 @@
-# morphos-core
+# Monika Glam Up
 
-**A hyper-variablized, domain-agnostic marketplace and booking engine that instantly morphs to any brand identity.**
+A professional bridal beauty website with transparent service pricing, portfolio, AI concierge, private enquiries, moderated client reviews, and MCP tools.
 
-Morphos Core dynamically adapts its brand identity, database schemas, and AI-powered capabilities through simple environment variable configuration. No code changes required—transform from one industry vertical to another with a single deployment.
+The repository can still build the `Crafts by Vani` variation, but Monika Glam Up is the primary experience.
 
-**📖 Documentation:**
-- [**🚀 QUICKSTART** - Deploy in 15 minutes](docs/QUICKSTART.md)
-- [**⚙️ SETUP** - Detailed deployment guide](docs/SETUP.md)
-- [**🆘 TROUBLESHOOTING** - Common issues & solutions](docs/TROUBLESHOOTING.md)
-- [**� DEVOPS** - Infrastructure & deployment reference](docs/DEVOPS.md)
-- [**�📘 Full README** - Complete documentation (this page)](README.md)
+## Your setup checklist
 
-## 🎯 Key Features
+- [ ] Create the Google Sheet and deploy [the provided Apps Script](docs/google-sheets-apps-script.gs).
+- [ ] Add `GOOGLE_SHEETS_WEBHOOK_URL` to GitHub Actions secrets.
+- [ ] Add `GEMINI_API_KEY` so the bridal concierge can answer visitors.
+- [ ] Add a long random `MCP_API_KEY` for protected MCP access.
+- [ ] Check `NEXT_PUBLIC_INSTAGRAM_URL` points to Monika's correct account.
+- [ ] Optionally add `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` for private alerts.
+- [ ] Confirm the PDF's unusual ₹400 combined pre-pleating + draping price before publishing it.
+- [ ] Push to `main`, wait for the Vercel workflow, and send one test enquiry.
+- [ ] Mark a test review `TRUE` in the Sheet's `Approved` column and confirm it appears.
 
-- **Domain-Agnostic Architecture**: One codebase powers multiple marketplace verticals (services, rentals, bookings, beauty & wellness, etc.)
-- **Environment-Driven Configuration**: Morph brand identity, AI behavior via environment variables—no code changes
-- **Gemini-Powered RAG AI Chatbot**: Intelligent conversational agent with knowledge retrieval and fact grounding
-- **MCP (Model Context Protocol) Ready**: Expose skills/capabilities for external AI orchestration
-- **Vector Similarity Search**: PostgreSQL `pgvector` for semantic search over uploaded knowledge
-- **Serverless-First**: Zero-cost deployment on Vercel (Next.js frontend + FastAPI API on same domain)
-- **Modern Tech Stack**: Next.js, FastAPI, Supabase PostgreSQL, Google Gemini AI
+## What is included
 
-## 🏗️ Tech Stack
+- Responsive bridal website using the supplied Monika Glam Up service guide
+- Bridal finishes from ₹8,000 to ₹12,000
+- Bridesmaid, party makeup, hairstyling, and saree draping services
+- Clear package inclusions, add-on notes, booking journey, and FAQs
+- AI bridal concierge grounded in the approved service guide
+- Google Sheets enquiry storage—no Supabase database required
+- Client rating/comment form with approval before publication
+- Optional private Telegram alert after an enquiry is saved
+- Real MCP endpoint with service-menu, concierge, and enquiry tools
+- Existing gallery images served from `apps/web/public/gallery`
 
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| **Frontend** | Next.js + TypeScript | Responsive marketplace UI with chat widget |
-| **Backend** | FastAPI + Python | Serverless API (Vercel Functions) |
-| **Database** | Supabase PostgreSQL | `pgvector` extension for embeddings, JSONB for flexible schemas |
-| **AI Models** | Google Gemini 2.5 Flash | Response generation; Gemini Embedding 001 for vectorization |
-| **Auth** | Supabase Auth | Admin dashboard access |
-| **Storage** | Supabase Storage | Knowledge documents (PDF/TXT/Markdown) |
-| **DevOps** | GitHub Actions | Auto-deploy migrations + Vercel projects on push |
+## Architecture
 
-## 🚀 Quick Start
-
-### 1. Prerequisites
-
-- GitHub account
-- Vercel account (free)
-- Supabase account (free)
-- Google Gemini API key ([get here](https://aistudio.google.com/))
-
-### 2. Clone & Setup
-
-```bash
-git clone https://github.com/E-Vanika/morphos-core.git
-cd morphos-core
+```text
+Next.js website
+  ├─ Service menu and portfolio
+  ├─ Enquiry and review forms
+  └─ AI concierge
+          │
+          ▼
+FastAPI /api
+  ├─ Google Sheets Apps Script (enquiries + moderated reviews)
+  ├─ Gemini (AI responses; optional but recommended)
+  ├─ Telegram Bot (private alerts; optional)
+  └─ MCP JSON-RPC tools
 ```
 
-### 3. Configure GitHub Secrets
+Supabase database access is not required for enquiries, ratings, comments, or the service menu. Legacy Supabase routes remain in the API for compatibility, but the Monika site does not call them.
 
-Go to **GitHub** → **Your Repository** → **Settings** → **Secrets and variables** → **Actions** and add:
+## 1. Connect Google Sheets
 
-| Secret Name | Value | Where to Find |
-|---|---|---|
-| `VERCEL_TOKEN` | Vercel auth token | [Vercel Settings → Tokens](https://vercel.com/account/tokens) |
-| `SUPABASE_ACCESS_TOKEN` | Supabase access token | Supabase Dashboard → Account → Access Tokens |
-| `SUPABASE_PROJECT_REF` | Project reference ID | Supabase → Settings → General → Reference ID |
-| `SUPABASE_DB_PASSWORD` | Database password | *You set this during Supabase project creation* |
-| `SUPABASE_URL` | Project URL | Supabase → Settings → API → Project URL |
-| `SUPABASE_ANON_KEY` | Anon/public key | Supabase → Settings → API → anon key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role key | Supabase → Settings → API → service_role key |
-| `GEMINI_API_KEY` | Google Gemini API key | [Google AI Studio](https://aistudio.google.com/) → Get API Key |
-| `MCP_API_KEY` | Random 32+ char string | Generate: `openssl rand -hex 16` |
-| `ADMIN_EMAILS` | Comma-separated emails | Emails allowed to manage knowledge & services |
+Google Sheets is the operational source of truth for enquiries and reviews.
 
-**Example:**
-```
-VERCEL_TOKEN=kv_xxxxxxxxxxxxxxxx
-SUPABASE_URL=https://xxxxx.supabase.co
-GEMINI_API_KEY=AIzaSyxxxxxxx
-MCP_API_KEY=abc123def456ghi789jkl
-ADMIN_EMAILS=admin@example.com,you@example.com
-```
+1. Create a blank Google Sheet.
+2. Copy the spreadsheet ID from its URL—the text between `/d/` and `/edit`.
+3. Open [script.google.com](https://script.google.com), create a **New project**, and paste [docs/google-sheets-apps-script.gs](docs/google-sheets-apps-script.gs) into the editor. This standalone route also works when **Extensions → Apps Script** fails.
+4. In **Project Settings → Script properties**, add both values:
 
-### 4. Deploy
+   ```text
+   WEBHOOK_KEY = a-long-random-secret
+   SPREADSHEET_ID = the-id-copied-from-the-sheet-url
+   ```
 
-Push to `main` branch. GitHub Actions will:
-1. Apply Supabase migrations (database schema + pgvector setup)
-2. Create/update Vercel projects
-3. Deploy frontend + API
+5. Run `setupSheets` once and approve the requested Sheet permission.
+6. Choose **Deploy → New deployment → Web app**.
+7. Set **Execute as** to yourself and **Who has access** to anyone.
+8. Copy the `/exec` deployment URL and append the key:
 
-```bash
-git push origin main
-# Check: GitHub → Actions to monitor deployment
-```
+   ```text
+   https://script.google.com/macros/s/DEPLOYMENT_ID/exec?key=a-long-random-secret
+   ```
 
-### 5. Test
+9. Save the complete URL as `GOOGLE_SHEETS_WEBHOOK_URL` in Vercel or GitHub Secrets.
 
-- **Frontend**: `https://your-project.vercel.app`
-- **API Health**: `https://your-project.vercel.app/api/health` → should return `{"status":"ok"}`
-- **Chat Widget**: Available at bottom-right of the site
+The script creates two tabs:
 
----
+- `Enquiries`: new leads and their event details
+- `Reviews`: submitted ratings and comments
 
-## 🧠 How RAG + Gemini AI Works
+To publish a review on the site, change its `Approved` cell to `TRUE`. Unapproved comments never appear publicly.
 
-### RAG (Retrieval-Augmented Generation) Pipeline
+If you change the Apps Script code, create a new deployment version. Editing the code alone does not update an existing deployment.
 
-1. **Upload Knowledge** (PDF/TXT/Markdown)
-   - Admin uploads via `/api/v1/admin/documents`
-   - System chunks text (1200 chars per chunk, 1000 char overlap)
-   - Each chunk is embedded using **Gemini Embedding 001** → 768-dimensional vector
-   - Vectors stored in `knowledge_chunks` table with `pgvector` extension
+## 2. Configure the AI concierge
 
-2. **User Asks Question**
-   - Message sent to `/api/v1/chat` endpoint
-   - Question is embedded using same Gemini model
+Create a Gemini API key and add it as:
 
-3. **Vector Similarity Search**
-   - PostgreSQL `pgvector` finds top 4 most similar chunks
-   - Uses `<=>` operator for efficient cosine distance
-   - Formula: `1 - (embedding1 <=> embedding2)` = similarity score
-
-4. **Generate Answer with Context**
-   - System prompt + retrieved chunks + user question sent to **Gemini 2.5 Flash**
-   - AI generates answer grounded only in provided knowledge
-   - Response includes source filenames
-
-```mermaid
-graph LR
-    A[Admin Uploads<br/>PDF/TXT] -->|Extract Text| B[Chunk Text<br/>1200 chars]
-    B -->|Embed| C[Gemini<br/>Embedding 001]
-    C -->|Store| D[PostgreSQL<br/>pgvector]
-    E[User Question] -->|Embed| C
-    C -->|Vector Search| D
-    D -->|Top 4 Chunks| F[Build Context]
-    F -->|Send Prompt| G[Gemini 2.5<br/>Flash]
-    G -->|Answer + Sources| H[User Response]
+```text
+GEMINI_API_KEY=your-key
 ```
 
-### System Prompts by Domain
+The assistant is grounded in the Monika service guide even when Supabase knowledge search is unavailable. It can explain prices, finishes, inclusions, add-ons, and what information a client should provide. It cannot confirm availability or claim that a booking is complete.
 
-Each domain has a custom system prompt to ensure quality responses:
+Without `GEMINI_API_KEY`, the rest of the website works but chat returns a configuration message.
 
-```python
-# apps/api/app/domain.py
-PROFILES = {
-    "bridal-makeup": DomainProfile(
-        name="Bridal makeup",
-        assistant_name="Monika Glam Up assistant",
-        system_prompt="You help visitors understand bridal makeup and hairstyling..."
-    ),
-    "art-craft": DomainProfile(
-        name="Art and craft",
-        assistant_name="Crafts by Vani assistant",
-        system_prompt="You help visitors understand custom art orders..."
-    ),
-    # Add more domains here
-}
+## 3. Optional Telegram alerts
+
+Google Sheets remains the primary record. Telegram can send Monika an immediate private alert after the Sheet accepts an enquiry.
+
+Add both values only if this is wanted:
+
+```text
+TELEGRAM_BOT_TOKEN=123456:bot-token
+TELEGRAM_CHAT_ID=123456789
 ```
 
----
+The public site does not redirect visitors to WhatsApp or Telegram.
 
-## 🔌 MCP (Model Context Protocol)
+## Environment variables
 
-### What is MCP?
+Backend:
 
-MCP is a standardized protocol for AI systems to discover and use external tools/skills. In Morphos:
-
-- **Endpoint**: `GET /api/v1/skills`
-- **Authentication**: `X-MCP-Key` header
-- **Returns**: List of available agent capabilities
-
-### Example Usage
-
-```bash
-curl -H "X-MCP-Key: your-mcp-api-key" \
-  https://your-site.vercel.app/api/v1/skills
-```
-
-**Response:**
-```json
-[
-  {
-    "id": "search_providers",
-    "description": "Find providers by specialty, expertise, or keyword.",
-    "input_hint": "query: string"
-  },
-  {
-    "id": "check_availability",
-    "description": "Find open appointment slots for a provider.",
-    "input_hint": "provider_id: string, date_range: string"
-  },
-  {
-    "id": "create_booking_draft",
-    "description": "Prepare, but never finalize, a booking from confirmed details.",
-    "input_hint": "provider_id: string, slot: string"
-  }
-]
-```
-
-**Note**: Currently, these are skill definitions. To fully implement skill execution, you'd need to:
-1. Extend Gemini to use `tools` parameter for function calling
-2. Implement actual skill endpoints (e.g., `POST /api/v1/skills/search_providers`)
-
----
-
-## 📊 Architecture & Data Flow
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│ FRONTEND (Vercel - Next.js)                                 │
-│ ├─ pages/                  (Landing, brand-specific UI)      │
-│ └─ components/chat-widget  (AI chatbot interface)            │
-└──────────────────┬──────────────────────────────────────────┘
-                   │ HTTP/HTTPS
-                   ↓
-┌─────────────────────────────────────────────────────────────┐
-│ BACKEND (Vercel Functions - FastAPI)                        │
-│ ├─ /api/v1/chat              (RAG chat)                     │
-│ ├─ /api/v1/skills            (MCP endpoint)                 │
-│ ├─ /api/v1/admin/documents   (Upload knowledge)             │
-│ ├─ /api/v1/services          (Marketplace items)            │
-│ └─ /api/v1/orders            (Booking requests)             │
-└──────────────────┬──────────────────────────────────────────┘
-                   │
-        ┌──────────┴──────────┬──────────────┐
-        ↓                     ↓              ↓
-    ┌──────────┐      ┌─────────────┐  ┌──────────┐
-    │ Supabase │      │   Gemini    │  │ Gemini   │
-    │PostgreSQL│      │ Embedding   │  │  Chat    │
-    │ pgvector │      │   001       │  │2.5 Flash │
-    │ Storage  │      └─────────────┘  └──────────┘
-    └──────────┘
-```
-
-### Database Schema
-
-```sql
--- Vector embeddings for knowledge base
-knowledge_documents     -- Admin-uploaded files (PDF, TXT, MD)
-├── id (uuid)
-├── domain_id (text)    -- Which vertical (bridal-makeup, art-craft)
-├── filename (text)     -- Source name shown in response
-└── storage_path (text) -- Supabase storage location
-
-knowledge_chunks        -- Text segments with embeddings
-├── id (uuid)
-├── document_id (uuid)  -- Reference to document
-├── content (text)      -- Chunk text (1200 chars)
-└── embedding (vector)  -- 768-dim Gemini embedding
-
--- Custom RPC function for vector similarity
-match_knowledge_chunks(query_embedding, match_count)
-└─ Finds top N most similar chunks using pgvector
-```
-
----
-
-## 🚀 Deployment Architecture
-
-### How It Works
-
-1. **GitHub Action Trigger**: Push to `main` branch
-2. **Supabase Migrations**: Automatic schema updates (includes `pgvector` setup)
-3. **Vercel Deployment**: Build & deploy both Next.js + FastAPI
-4. **API Routes**: Both served on same domain under `/api`
-
-```bash
-# Vercel builds with this config (vercel.json):
-{
-  "framework": "nextjs",
-  "outputDirectory": "apps/web/.next",
-  "functions": {
-    "api/index.py": {
-      "maxDuration": 60  # Seconds
-    }
-  }
-}
-```
-
-### Environment Variables at Runtime
-
-Vercel uses GitHub Secrets → Sets `--build-env` and `--env` during deployment
-
-```bash
-npx vercel deploy --prod \
-  --build-env GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} \
-  --build-env SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-```
-
----
-
-## 💡 Use Cases
-
-| Vertical | Example | Domain | Assistant Name |
-|----------|---------|--------|---|
-| **Beauty & Wellness** | Bridal makeup, salon | `bridal-makeup` | Monika Glam Up assistant |
-| **Creative Services** | Art, custom orders | `art-craft` | Crafts by Vani assistant |
-| **Professional Services** | Consulting, coaching | `professional-services` | Clarity concierge |
-| **Healthcare** | Doctor appointments | `healthcare` | Care concierge |
-| **Custom Vertical** | Your industry | `your-domain` | Your AI name |
-
-Add new verticals by extending `PROFILES` in `apps/api/app/domain.py`
-
----
-
-## 🔐 Security & Best Practices
-
-| Aspect | Implementation |
-|--------|---|
-| **API Keys** | GitHub Secrets (never in repo) |
-| **Database Access** | Supabase Service Role Key (backend only) |
-| **Admin Auth** | Supabase JWT tokens + email whitelist |
-| **Rate Limiting** | 12 requests per 60 seconds per IP |
-| **CORS** | Configurable `ALLOWED_ORIGINS` |
-| **Knowledge Isolation** | Documents scoped to domain/admin |
-| **System Prompts** | Prevent prompt injection via domain-specific rules |
-
----
-
-## 📝 Local Development
-
-### Option 1: Full Stack with Vercel CLI
-
-```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Link to Vercel project
-vercel link
-
-# Start local dev (includes FastAPI serverless simulation)
-vercel dev
-
-# Access: http://localhost:3000
-```
-
-### Option 2: Manual Setup (Frontend + Backend Separate)
-
-```bash
-# Terminal 1: Frontend
-cd apps/web
-npm install
-npm run dev
-# → http://localhost:3000
-
-# Terminal 2: Backend
-cd apps/api
-pip install -r requirements.txt
-python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-# → http://localhost:8000
-
-# Set in apps/web/.env.local:
-NEXT_PUBLIC_API_URL=http://localhost:8000/api
-```
-
-### Environment Variables for Local Dev
-
-Create `apps/web/.env.local`:
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:8000/api
-NEXT_PUBLIC_SITE_KIND=bridal  # or craft
-```
-
-Create `apps/api/.env.local`:
-```env
-SUPABASE_URL=https://xxxxx.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGc...
-GEMINI_API_KEY=AIzaSy...
-MCP_API_KEY=your-random-key
-ADMIN_EMAILS=you@example.com
+GOOGLE_SHEETS_WEBHOOK_URL=https://script.google.com/macros/s/.../exec?key=...
+GEMINI_API_KEY=
+MCP_API_KEY=
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_CHAT_ID=
 ALLOWED_ORIGINS=http://localhost:3000
+LOG_LEVEL=INFO
 ```
 
----
+Frontend:
 
-## ❓ FAQ
-
-### **AI Assistant Says "Offline" or "Temporarily Offline"**
-
-**Causes & Solutions:**
-
-1. **Gemini API Key Missing**
-   - Check: GitHub Secrets → `GEMINI_API_KEY` is set
-   - Verify: Key is valid at [Google AI Studio](https://aistudio.google.com/)
-   - Test: `curl "https://your-api.vercel.app/api/health"` → should return `{"status":"ok"}`
-
-2. **API Not Responding**
-   - Check: Vercel deployment logs for errors
-   - Verify: `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are set in GitHub Secrets
-   - Test locally: Run backend on `localhost:8000` and set `NEXT_PUBLIC_API_URL=http://localhost:8000/api`
-
-3. **Rate Limit Exceeded**
-   - Limit: 12 requests per 60 seconds per IP
-   - Solution: Wait 60 seconds before retrying
-   - For production: Use Vercel's WAF or API Gateway limits
-
-4. **CORS Issues**
-   - Add your domain to `ALLOWED_ORIGINS` GitHub Secret
-   - Local dev: Ensure it includes `http://localhost:3000`
-
-### **How Do I Add Knowledge?**
-
-1. Prepare document (PDF, TXT, or Markdown)
-2. Create Supabase Auth account (for admin)
-3. Add your email to `ADMIN_EMAILS` GitHub Secret
-4. Sign in at your site with that email
-5. Use `/api/v1/admin/documents` endpoint with `Authorization: Bearer <your_supabase_token>`
-
-**Example:**
-```bash
-curl -X POST https://your-site.vercel.app/api/v1/admin/documents \
-  -H "Authorization: Bearer YOUR_SUPABASE_TOKEN" \
-  -F "file=@pricing.pdf"
+```env
+NEXT_PUBLIC_API_URL=/api
+NEXT_PUBLIC_SITE_KIND=bridal
 ```
 
-### **Can I Use a Different AI Model?**
+`MCP_API_KEY` should be a long random value. When it is set, callers must send it through `X-MCP-Key`.
 
-Gemini is baked in. To use OpenAI/Anthropic:
-1. Replace `google-genai` imports with your provider's SDK
-2. Update embedding model (keep 768-dim for pgvector)
-3. Update `generate_content()` call to your provider's API
-4. Test vector similarity search still works
+## Local development
 
-### **How Do I Deploy to a Different Cloud?**
+Requirements:
 
-Currently optimized for **Vercel** (zero-cost, easy GitHub integration).
+- Node.js 22+
+- Python 3.12+
 
-To use AWS Lambda/GCP Cloud Functions:
-1. Keep FastAPI backend code the same
-2. Create serverless function wrapper (e.g., AWS SAM, Google Cloud Functions)
-3. Deploy frontend to different CDN (CloudFront, Cloud CDN, etc.)
-4. Update API endpoint in frontend env vars
-
-### **Can I Customize the Domain Profiles?**
-
-Yes! Edit `apps/api/app/domain.py`:
-
-```python
-PROFILES = {
-    "your-domain": DomainProfile(
-        name="Your Business",
-        listing_label="offerings",
-        booking_label="booking",
-        assistant_name="Your AI Name",
-        system_prompt="Your custom system prompt here...",
-    ),
-}
-```
-
-Then use `domain: "your-domain"` in chat requests.
-
-### **How Is Knowledge Stored & Searched?**
-
-- **Chunking**: Text split into 1200-char pieces (1000-char overlap for context)
-- **Embedding**: Each chunk vectorized with Gemini Embedding 001 (768 dimensions)
-- **Storage**: PostgreSQL `knowledge_chunks` table with `pgvector` extension
-- **Search**: Similarity search uses `<=>` operator (cosine distance)
-- **Top Results**: Top 4 most similar chunks sent to LLM with user question
-
-### **Why PostgreSQL pgvector Instead of Vector DB?**
-
-- **Simplicity**: Everything in Supabase (single DB)
-- **Cost**: No separate Vector DB subscription
-- **Speed**: pgvector optimized for <1M vectors (sufficient for typical knowledge bases)
-- **SQL**: Combine vector search with traditional SQL filters
-- **Scaling**: Simple to migrate to dedicated vector DB later if needed
-
-### **What Happens if Knowledge Is Too Large?**
-
-- Max file size: 5 MB (configurable in code)
-- Max text per chunk: 1200 characters
-- Typical limit: ~200-300 files before vector search slows down
-- Solution: Use Pinecone/Weaviate for enterprise-scale RAG
-
-### **Can I Use This with Multiple Websites?**
-
-Yes! Each GitHub Secret set can deploy multiple Vercel projects:
+Install dependencies:
 
 ```bash
-# deploy.yml workflow deploys TWO sites:
-deploy_site crafts-by-vani craft      # Uses NEXT_PUBLIC_SITE_KIND=craft
-deploy_site monika-glamup bridal      # Uses NEXT_PUBLIC_SITE_KIND=bridal
+npm install
+python -m pip install -r requirements.txt
 ```
 
-Each gets its own domain + database scope.
+Run the full Vercel-style application:
 
-### **Is This Production-Ready?**
-
-✅ **Yes, for small-to-medium projects:**
-- Suitable for: <10k monthly users, <500 documents
-- RAG performance: Milliseconds (pgvector is fast)
-- API rate limiting: Built-in, but scale with Vercel Edge Middleware for enterprise
-- Zero-cost hosting: Free tier Supabase + Vercel covers most use cases
-
-⚠️ **Consider enterprise solutions if you need:**
-- > 1M vectors
-- Real-time collaborative editing
-- Multi-region deployments
-- 99.99% uptime SLAs
-- Custom model fine-tuning
-
----
-
-## 📂 File Structure
-
-```
-morphos-core/
-├── apps/
-│   ├── web/                    # Next.js frontend
-│   │   ├── app/
-│   │   │   ├── page.tsx       # Landing page (brand-specific)
-│   │   │   ├── layout.tsx     # App shell
-│   │   │   ├── globals.css    # Styles
-│   │   │   └── components/
-│   │   │       └── chat-widget.tsx  # AI chat UI
-│   │   ├── package.json
-│   │   └── tsconfig.json
-│   └── api/
-│       ├── app/
-│       │   ├── main.py        # FastAPI app + endpoints
-│       │   ├── domain.py      # Domain profiles & system prompts
-│       │   └── skills.py      # MCP skill definitions
-│       ├── requirements.txt    # Python dependencies
-│       └── .env.example
-├── api/
-│   └── index.py               # Vercel serverless wrapper
-├── supabase/
-│   └── migrations/
-│       ├── 202607190001_initial.sql           # Tables + pgvector setup
-│       ├── 202607230002_order_requests.sql
-│       ├── 202607230003_services.sql
-│       └── 202607230004_knowledge_sources.sql # RAG vectors
-├── .github/
-│   └── workflows/
-│       ├── ci.yml            # Linting & tests
-│       └── deploy.yml        # Auto-deploy on push
-├── vercel.json               # Deployment config
-├── package.json              # Root workspace config
-└── README.md                 # This file
+```bash
+npx vercel dev
 ```
 
----
+Or run the two parts separately:
 
-## 🛠️ Troubleshooting
+```bash
+# Terminal 1
+cd apps/web
+npm run dev
 
-### **Deployment Fails: "GEMINI_API_KEY not set"**
+# Terminal 2
+cd apps/api
+python -m uvicorn app.main:app --reload --port 8000
+```
 
-- **Check**: GitHub Secrets → Actions → Verify `GEMINI_API_KEY` is added
-- **Verify**: Value is actual API key (starts with `AIzaSy...`)
-- **Retry**: Re-run GitHub Action workflow
+For separate development, set `NEXT_PUBLIC_API_URL=http://localhost:8000/api` in `apps/web/.env.local`.
 
-### **Chat Returns: "Database connection failed"**
+## Build and verify
 
-- **Check**: `SUPABASE_SERVICE_ROLE_KEY` in GitHub Secrets
-- **Verify**: Key is the "service_role" key (not anon key)
-- **Test**: Run migrations manually: `Supabase Dashboard → SQL Editor` → paste migrations
+```bash
+npm run build:web
+python -m compileall apps/api/app api
+```
 
-### **Vector Search Returns No Results**
+Useful checks after deployment:
 
-- **Check**: Knowledge has been uploaded via `/api/v1/admin/documents`
-- **Verify**: Admin user email is in `ADMIN_EMAILS`
-- **Test**: Check Supabase `knowledge_chunks` table → should have rows with embeddings
+```bash
+curl https://YOUR_DOMAIN/api/health
 
-### **Vercel Function Timeout (>60s)**
+curl -X POST https://YOUR_DOMAIN/api/v1/orders \
+  -H "Content-Type: application/json" \
+  -d '{"service":"bridal-makeup","customer_name":"Test Bride","phone":"9876543210","requested_service":"Soft Glam Bridal Look"}'
+```
 
-- **Cause**: Large file processing or slow API calls
-- **Solution**: Increase `maxDuration` in `vercel.json` (up to 900s on Pro plan)
-- **Alternative**: Offload to background job service
+Delete the test row from the Sheet afterward.
 
----
+## MCP
 
-## 📚 Additional Resources
+Endpoint:
 
-- [Supabase Docs](https://supabase.com/docs)
-- [pgvector Documentation](https://github.com/pgvector/pgvector)
-- [Google Gemini API](https://ai.google.dev/)
-- [Vercel Deployment](https://vercel.com/docs)
-- [Model Context Protocol Spec](https://modelcontextprotocol.io/)
+```text
+POST /api/mcp
+Header: X-MCP-Key: your-key
+```
 
----
+Available tools:
 
-## 📝 Project Showcase
+- `get_bridal_service_menu` — reads approved service names and prices
+- `ask_bridal_concierge` — answers from approved Monika knowledge
+- `prepare_bridal_enquiry` — saves an enquiry to Google Sheets; never confirms a booking
 
-**Current Deployments:**
-- **Crafts by Vani**: Art & custom craft orders (domain: `art-craft`)
-- **Monika Glam Up**: Bridal makeup & hairstyling (domain: `bridal-makeup`)
-- Fully responsive design with mobile support
-- Real-time availability updates
-- One-click booking confirmation
+List tools:
 
-## 🛠️ Development Workflow
+```bash
+curl -X POST https://YOUR_DOMAIN/api/mcp \
+  -H "Content-Type: application/json" \
+  -H "X-MCP-Key: YOUR_MCP_KEY" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+```
 
-1. **Create a branch** for your feature
-2. **Push changes** → GitHub Actions auto-tests
-3. **Deploy preview** via Terraform Cloud
-4. **Merge to main** → Production deployment
+## API reference
 
-## 📚 Documentation
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/api/health` | Deployment health |
+| `POST` | `/api/v1/chat` | AI concierge |
+| `POST` | `/api/v1/orders` | Save enquiry to Google Sheets |
+| `GET` | `/api/v1/reviews` | Read approved Sheet reviews |
+| `POST` | `/api/v1/reviews` | Submit a review for approval |
+| `GET` | `/api/v1/skills` | Human-readable skill list |
+| `POST` | `/api/mcp` | MCP JSON-RPC endpoint |
 
-- [Setup Guide](./docs/SETUP.md)
-- [API Reference](./docs/API.md)
-- [Domain Configuration](./docs/CONFIGURATION.md)
-- [Deployment Guide](./docs/DEPLOYMENT.md)
+## Deployment
 
-## 🤝 Contributing
+The GitHub Actions workflow deploys two Vercel projects:
 
-Contributions welcome! Please:
-1. Fork the repository
-2. Create a feature branch
-3. Submit a pull request with detailed description
+- `monika-glamup` with `NEXT_PUBLIC_SITE_KIND=bridal`
+- `crafts-by-vani` with `NEXT_PUBLIC_SITE_KIND=craft`
 
-## 📄 License
+Add the required values under **GitHub → Settings → Secrets and variables → Actions**, then push to `main` or run the workflow manually.
 
-[Add your license here]
+The old automatic Supabase migration job has been removed because the customer workflow now uses Google Sheets.
 
-## 🙋 Support
+## Important content note
 
-For questions or issues:
-- Open a GitHub issue
-- Check existing discussions
-- Review the documentation
-
----
-
-**Built with ❤️ by the Morphos team**
+The supplied PDF lists `Pre-Pleating + Draping` at ₹400, which is lower than either service separately. The public website does not advertise that combined price; confirm the intended amount before adding it.
