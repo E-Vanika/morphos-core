@@ -1,176 +1,195 @@
 # Monika Glam Up
 
-A professional bridal beauty website with transparent service pricing, portfolio, AI concierge, private enquiries, moderated client reviews, and MCP tools.
+A professional bridal and self-care website with transparent pricing, a portfolio, an AI concierge, private enquiries, public client reviews, Google Sheets storage, optional Telegram alerts, and MCP tools.
 
-The repository can still build the `Crafts by Vani` variation, but Monika Glam Up is the primary experience.
+## What you still need to do
 
-## Your setup checklist
+- [ ] Replace your Apps Script project code with [the current script](docs/google-sheets-apps-script.gs).
+- [ ] In Apps Script, choose **Deploy → Manage deployments → Edit → New version → Deploy**. Editing code alone does not update the live webhook.
+- [ ] Push this repository to `main` and wait for both Vercel deployments to finish.
+- [ ] Open `/api/health` on the Monika domain and confirm `google_sheets`, `gemini`, `telegram`, and `mcp` are all `true`.
+- [ ] Submit one test enquiry and confirm that it appears in the Sheet's `Enquiries` tab.
+- [ ] Submit one test review and confirm that it appears immediately on `/reviews`. No approval step is required.
+- [ ] Ask the concierge one question and confirm a useful answer appears.
 
-- [ ] Create the Google Sheet and deploy [the provided Apps Script](docs/google-sheets-apps-script.gs).
-- [ ] Add `GOOGLE_SHEETS_WEBHOOK_URL` to GitHub Actions secrets.
-- [ ] Add `GEMINI_API_KEY` so the bridal concierge can answer visitors.
-- [ ] Add a long random `MCP_API_KEY` for protected MCP access.
-- [ ] Check `NEXT_PUBLIC_INSTAGRAM_URL` points to Monika's correct account.
-- [ ] Optionally add `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` for private alerts.
-- [ ] Confirm the PDF's unusual ₹400 combined pre-pleating + draping price before publishing it.
-- [ ] Push to `main`, wait for the Vercel workflow, and send one test enquiry.
-- [ ] Mark a test review `TRUE` in the Sheet's `Approved` column and confirm it appears.
+All listed secrets have already been added according to the project handoff. Do not commit their values to this repository.
 
-## What is included
+## Included pages and features
 
-- Responsive bridal website using the supplied Monika Glam Up service guide
-- Bridal finishes from ₹8,000 to ₹12,000
-- Bridesmaid, party makeup, hairstyling, and saree draping services
-- Clear package inclusions, add-on notes, booking journey, and FAQs
-- AI bridal concierge grounded in the approved service guide
-- Google Sheets enquiry storage—no Supabase database required
-- Client rating/comment form with approval before publication
-- Optional private Telegram alert after an enquiry is saved
-- Real MCP endpoint with service-menu, concierge, and enquiry tools
-- Existing gallery images served from `apps/web/public/gallery`
+- Monika Glam Up bridal home page with the supplied services and prices
+- Full rating summary, rating distribution, and every client comment at `/reviews`
+- Mamo Self Care menu, combos, transparent pricing, and private enquiry form at `/mamo-self-care`
+- Gemini-powered concierge grounded in the published service guide
+- Built-in answers for common service questions when the AI provider is briefly unavailable
+- Google Sheets as the operational store for enquiries and reviews
+- Optional Telegram alert after an enquiry is safely stored
+- MCP service-menu, concierge, and enquiry tools
 
-## Architecture
+The public APIs and MCP endpoint are native Next.js route handlers inside `apps/web`, so they work when Vercel's Root Directory is `apps/web`. Supabase is not required for the production customer journey. The legacy FastAPI implementation remains as a compatibility/reference path.
 
-```text
-Next.js website
-  ├─ Service menu and portfolio
-  ├─ Enquiry and review forms
-  └─ AI concierge
-          │
-          ▼
-FastAPI /api
-  ├─ Google Sheets Apps Script (enquiries + moderated reviews)
-  ├─ Gemini (AI responses; optional but recommended)
-  ├─ Telegram Bot (private alerts; optional)
-  └─ MCP JSON-RPC tools
+## Engineering case study
+
+This project demonstrates more than frontend development. It combines a production-oriented AI workflow, MCP tools, serverless integrations, failure isolation, and operational diagnostics in a small-business application.
+
+### Architecture
+
+```mermaid
+flowchart LR
+    Visitor[Website visitor] --> Web[Next.js UI]
+    Web --> Routes[Next.js server routes]
+    Routes --> Retrieve[Local knowledge retrieval]
+    Retrieve --> Gemini[Gemini generation]
+    Gemini --> Web
+    Routes --> Sheets[Google Sheets webhook]
+    Sheets --> Telegram[Telegram notification]
+    Agent[MCP client or agent] --> MCP[Authenticated MCP JSON-RPC endpoint]
+    MCP --> Retrieve
+    MCP --> Sheets
+    Health[Health endpoint] --> Config[Safe integration-status checks]
 ```
 
-Supabase database access is not required for enquiries, ratings, comments, or the service menu. Legacy Supabase routes remain in the API for compatibility, but the Monika site does not call them.
+### AI and RAG implementation
 
-## 1. Connect Google Sheets
+The production concierge uses a lightweight retrieval-augmented generation pipeline. It is not described as vector search because the deployed retrieval method is deterministic weighted lexical retrieval.
 
-Google Sheets is the operational source of truth for enquiries and reviews.
+| RAG stage | Implementation |
+|---|---|
+| Knowledge preparation | Supplied business documents are converted into small, version-controlled knowledge chunks with titles, content, and retrieval keywords. |
+| Retrieval | The visitor query is tokenised and scored against titles, keywords, and chunk content. The top relevant chunks are selected. |
+| Augmentation | Only retrieved chunks are placed in the Gemini prompt alongside booking-safety and prompt-injection constraints. |
+| Generation | Gemini `2.5-flash` generates the customer-facing response from retrieved context. |
+| Grounding | The API returns the titles of retrieved sources and the chat interface displays them beneath the response. |
+| Degradation | If Gemini is missing, slow, or unavailable, deterministic service-guide answers keep core questions usable. |
 
-1. Create a blank Google Sheet.
-2. Copy the spreadsheet ID from its URL—the text between `/d/` and `/edit`.
-3. Open [script.google.com](https://script.google.com), create a **New project**, and paste [docs/google-sheets-apps-script.gs](docs/google-sheets-apps-script.gs) into the editor. This standalone route also works when **Extensions → Apps Script** fails.
-4. In **Project Settings → Script properties**, add both values:
+Relevant implementation:
+
+- [Knowledge corpus and retriever](apps/web/lib/knowledge.ts)
+- [Gemini, Sheets, and Telegram integrations](apps/web/lib/server-integrations.ts)
+- [Chat API route](apps/web/app/api/v1/chat/route.ts)
+- [Concierge interface](apps/web/app/components/chat-widget.tsx)
+- [Retrieval unit tests](apps/web/lib/knowledge.test.ts)
+
+The legacy FastAPI path also contains an optional Gemini-embedding/Supabase RPC retrieval implementation. The deployed Next.js path deliberately does not depend on Supabase because that database was not reliable for this project.
+
+### MCP and agent integration
+
+`POST /api/mcp` exposes an API-key-protected JSON-RPC tool surface that allows an agent to:
+
+- retrieve the published bridal service menu;
+- ask the RAG-backed bridal concierge;
+- save a private enquiry and trigger the notification workflow.
+
+Tool calls never confirm availability. The enquiry tool stores the request before attempting the optional Telegram notification.
+
+### SRE and reliability decisions
+
+| Reliability concern | Control used here |
+|---|---|
+| Deployment health | `/api/health` reports service status and safe booleans for Sheets, Gemini, and Telegram configuration without exposing secret values. |
+| Dependency hangs | Google Sheets, Telegram, and Gemini calls use explicit 10–20 second timeouts. |
+| Data before notification | Enquiries are written to Google Sheets before Telegram is called. A Telegram failure cannot discard a saved lead. |
+| Failure isolation | Reviews, enquiries, AI, and Telegram errors are handled independently with actionable server logs. |
+| Graceful degradation | The concierge falls back to deterministic grounded answers when Gemini fails. |
+| Input boundaries | Server routes validate required fields, lengths, integer ratings, and supported operations. |
+| Secret handling | Gemini, MCP, Telegram, and webhook credentials remain server-side environment variables. |
+| MCP authentication | `X-MCP-Key` comparison uses a timing-safe equality check. |
+| Supply-chain control | The required `esbuild` install script is allowed only for the exact pinned version. |
+| Monorepo deployment | Both repository-root and `apps/web` Vercel build layouts are supported. |
+
+### Engineering skills demonstrated
+
+- Next.js App Router, React, TypeScript, responsive and accessible UI
+- FastAPI and Pydantic reference implementation
+- RAG retrieval, prompt grounding, source attribution, and deterministic fallback
+- Gemini REST integration and prompt-injection boundaries
+- MCP tool schemas and JSON-RPC handling
+- Google Apps Script webhooks and spreadsheet-backed workflows
+- Telegram Bot API integration
+- Health checks, timeouts, failure isolation, safe configuration diagnostics, and CI/CD
+
+### Production hardening backlog
+
+The following are intentionally documented rather than claimed as completed:
+
+- durable rate limiting for public serverless endpoints;
+- idempotency keys to prevent duplicate enquiry submissions;
+- retry/dead-letter handling for failed Telegram notifications;
+- automated browser and integration tests in CI;
+- external uptime checks and alerting;
+- vector retrieval if the knowledge corpus grows beyond the current curated guide.
+
+## Google Sheets setup
+
+Google Sheets is the source of truth for enquiries and reviews.
+
+1. Open [script.google.com](https://script.google.com) and open the Apps Script project connected to your Sheet.
+2. Paste [docs/google-sheets-apps-script.gs](docs/google-sheets-apps-script.gs).
+3. In **Project Settings → Script properties**, set:
 
    ```text
    WEBHOOK_KEY = a-long-random-secret
-   SPREADSHEET_ID = the-id-copied-from-the-sheet-url
+   SPREADSHEET_ID = 1GKPFoW9c1pzrPQQDd228Rc45m7FCaKwQyR0c22PtYX0
    ```
 
-5. Run `setupSheets` once and approve the requested Sheet permission.
-6. Choose **Deploy → New deployment → Web app**.
-7. Set **Execute as** to yourself and **Who has access** to anyone.
-8. Copy the `/exec` deployment URL and append the key:
+4. Run `setupSheets` once and approve access.
+5. Choose **Deploy → Manage deployments → Edit → New version → Deploy**.
+6. Copy the `/exec` deployment URL and append the same key:
 
    ```text
-   https://script.google.com/macros/s/DEPLOYMENT_ID/exec?key=a-long-random-secret
+   https://script.google.com/macros/s/DEPLOYMENT_ID/exec?key=YOUR_WEBHOOK_KEY
    ```
 
-9. Save the complete URL as `GOOGLE_SHEETS_WEBHOOK_URL` in Vercel or GitHub Secrets.
+7. Save that complete URL as `GOOGLE_SHEETS_WEBHOOK_URL` in GitHub Actions and Vercel.
 
-The script creates two tabs:
-
-- `Enquiries`: new leads and their event details
-- `Reviews`: submitted ratings and comments
-
-To publish a review on the site, change its `Approved` cell to `TRUE`. Unapproved comments never appear publicly.
-
-If you change the Apps Script code, create a new deployment version. Editing the code alone does not update an existing deployment.
-
-## 2. Configure the AI concierge
-
-Create a Gemini API key and add it as:
-
-```text
-GEMINI_API_KEY=your-key
-```
-
-The assistant is grounded in the Monika service guide even when Supabase knowledge search is unavailable. It can explain prices, finishes, inclusions, add-ons, and what information a client should provide. It cannot confirm availability or claim that a booking is complete.
-
-Without `GEMINI_API_KEY`, the rest of the website works but chat returns a configuration message.
-
-## 3. Optional Telegram alerts
-
-Google Sheets remains the primary record. Telegram can send Monika an immediate private alert after the Sheet accepts an enquiry.
-
-Add both values only if this is wanted:
-
-```text
-TELEGRAM_BOT_TOKEN=123456:bot-token
-TELEGRAM_CHAT_ID=123456789
-```
-
-The public site does not redirect visitors to WhatsApp or Telegram.
+The script creates `Enquiries` and `Reviews` tabs. Reviews are public immediately. The old `Approved` column remains for backward compatibility but is no longer used as a filter.
 
 ## Environment variables
 
-Backend:
+Required:
 
 ```env
 GOOGLE_SHEETS_WEBHOOK_URL=https://script.google.com/macros/s/.../exec?key=...
-GEMINI_API_KEY=
-MCP_API_KEY=
-TELEGRAM_BOT_TOKEN=
-TELEGRAM_CHAT_ID=
-ALLOWED_ORIGINS=http://localhost:3000
-LOG_LEVEL=INFO
+GEMINI_API_KEY=...
+MCP_API_KEY=...
+NEXT_PUBLIC_INSTAGRAM_URL=https://www.instagram.com/monika_glamup/
 ```
 
-Frontend:
+Optional Telegram alerts:
+
+```env
+TELEGRAM_BOT_TOKEN=...
+TELEGRAM_CHAT_ID=5907218590
+```
+
+Application defaults:
 
 ```env
 NEXT_PUBLIC_API_URL=/api
 NEXT_PUBLIC_SITE_KIND=bridal
+ALLOWED_ORIGINS=http://localhost:3000
+LOG_LEVEL=INFO
 ```
-
-`MCP_API_KEY` should be a long random value. When it is set, callers must send it through `X-MCP-Key`.
 
 ## Local development
 
-Requirements:
-
-- Node.js 22+
-- Python 3.12+
-
-Install dependencies:
+Requirements: Node.js 22+ and Python 3.12+.
 
 ```bash
 npm install
 python -m pip install -r requirements.txt
-```
-
-Run the full Vercel-style application:
-
-```bash
 npx vercel dev
 ```
 
-Or run the two parts separately:
-
-```bash
-# Terminal 1
-cd apps/web
-npm run dev
-
-# Terminal 2
-cd apps/api
-python -m uvicorn app.main:app --reload --port 8000
-```
-
-For separate development, set `NEXT_PUBLIC_API_URL=http://localhost:8000/api` in `apps/web/.env.local`.
-
-## Build and verify
+Build checks:
 
 ```bash
 npm run build:web
 python -m compileall apps/api/app api
 ```
 
-Useful checks after deployment:
+The web package intentionally provides both `build` and `build:web`. This makes the configured Vercel command work whether the Vercel project root is the repository or `apps/web`.
+
+## Deployment checks
 
 ```bash
 curl https://YOUR_DOMAIN/api/health
@@ -180,24 +199,35 @@ curl -X POST https://YOUR_DOMAIN/api/v1/orders \
   -d '{"service":"bridal-makeup","customer_name":"Test Bride","phone":"9876543210","requested_service":"Soft Glam Bridal Look"}'
 ```
 
-Delete the test row from the Sheet afterward.
+Delete test rows from the Sheet afterward.
 
-## MCP
+The GitHub workflow deploys:
 
-Endpoint:
+- `monika-glamup` with `NEXT_PUBLIC_SITE_KIND=bridal`
+- `crafts-by-vani` with `NEXT_PUBLIC_SITE_KIND=craft`
 
-```text
-POST /api/mcp
-Header: X-MCP-Key: your-key
+## API and MCP
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/api/health` | Deployment health |
+| `POST` | `/api/v1/chat` | AI concierge |
+| `POST` | `/api/v1/orders` | Save an enquiry to Google Sheets |
+| `GET` | `/api/v1/reviews` | Read all Sheet reviews |
+| `POST` | `/api/v1/reviews` | Publish a review |
+| `POST` | `/api/mcp` | MCP JSON-RPC endpoint |
+
+MCP calls use `POST /api/mcp` with the header `X-MCP-Key: YOUR_MCP_KEY`. Available tools are `get_bridal_service_menu`, `ask_bridal_concierge`, and `prepare_bridal_enquiry`.
+
+Inspect a grounded chat response and its retrieved sources:
+
+```bash
+curl -X POST https://YOUR_DOMAIN/api/v1/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Compare matte and glow bridal finishes"}'
 ```
 
-Available tools:
-
-- `get_bridal_service_menu` — reads approved service names and prices
-- `ask_bridal_concierge` — answers from approved Monika knowledge
-- `prepare_bridal_enquiry` — saves an enquiry to Google Sheets; never confirms a booking
-
-List tools:
+Discover the MCP tools:
 
 ```bash
 curl -X POST https://YOUR_DOMAIN/api/mcp \
@@ -205,30 +235,3 @@ curl -X POST https://YOUR_DOMAIN/api/mcp \
   -H "X-MCP-Key: YOUR_MCP_KEY" \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 ```
-
-## API reference
-
-| Method | Path | Purpose |
-|---|---|---|
-| `GET` | `/api/health` | Deployment health |
-| `POST` | `/api/v1/chat` | AI concierge |
-| `POST` | `/api/v1/orders` | Save enquiry to Google Sheets |
-| `GET` | `/api/v1/reviews` | Read approved Sheet reviews |
-| `POST` | `/api/v1/reviews` | Submit a review for approval |
-| `GET` | `/api/v1/skills` | Human-readable skill list |
-| `POST` | `/api/mcp` | MCP JSON-RPC endpoint |
-
-## Deployment
-
-The GitHub Actions workflow deploys two Vercel projects:
-
-- `monika-glamup` with `NEXT_PUBLIC_SITE_KIND=bridal`
-- `crafts-by-vani` with `NEXT_PUBLIC_SITE_KIND=craft`
-
-Add the required values under **GitHub → Settings → Secrets and variables → Actions**, then push to `main` or run the workflow manually.
-
-The old automatic Supabase migration job has been removed because the customer workflow now uses Google Sheets.
-
-## Important content note
-
-The supplied PDF lists `Pre-Pleating + Draping` at ₹400, which is lower than either service separately. The public website does not advertise that combined price; confirm the intended amount before adding it.

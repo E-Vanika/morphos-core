@@ -42,9 +42,9 @@ function doPost(event) {
     }
     if (payload.event === "new_review") {
       spreadsheet.getSheetByName("Reviews").appendRow([
-        new Date(), false, safe_(data.name), Number(data.rating), safe_(data.event), safe_(data.comment)
+        new Date(), true, safe_(data.name), Number(data.rating), safe_(data.event), safe_(data.comment)
       ]);
-      return json_({ status: "pending" });
+      return json_({ status: "saved" });
     }
     return json_({ error: "unsupported_event" });
   } finally {
@@ -54,16 +54,15 @@ function doPost(event) {
 
 function doGet(event) {
   if (!isAuthorised_(event)) return json_({ error: "unauthorised", reviews: [] });
-  if (event.parameter.view !== "approved_reviews") return json_({ status: "ok" });
+  const view = event.parameter.view;
+  if (view !== "reviews" && view !== "approved_reviews") return json_({ status: "ok" });
   setupSheets();
   const sheet = getSpreadsheet_().getSheetByName("Reviews");
   const rows = sheet.getDataRange().getValues().slice(1);
   const reviews = rows
-    .filter(row => row[1] === true || String(row[1]).toLowerCase() === "true")
     .map(row => ({ name: safe_(row[2]), rating: Number(row[3]), event: safe_(row[4]), comment: safe_(row[5]) }))
     .filter(review => review.name && review.comment && review.rating >= 1 && review.rating <= 5)
-    .reverse()
-    .slice(0, 20);
+    .reverse();
   return json_({ reviews: reviews });
 }
 

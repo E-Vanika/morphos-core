@@ -71,7 +71,7 @@ class ChatResponse(BaseModel):
 
 
 class OrderRequest(BaseModel):
-    service: str = Field(pattern="^(art-craft|bridal-makeup)$")
+    service: str = Field(pattern="^(art-craft|bridal-makeup|self-care)$")
     customer_name: str = Field(min_length=2, max_length=100)
     phone: str = Field(min_length=6, max_length=30)
     event_date: str | None = None
@@ -191,6 +191,26 @@ def retrieve_context(message: str, domain: str) -> tuple[str, list[str]]:
     return "\n\n".join(row["content"] for row in rows if row.get("content")), sources
 
 
+def local_service_answer(message: str, domain: str) -> str:
+    """Keep the public concierge useful during a temporary Gemini outage."""
+    query = message.lower()
+    if domain != "bridal-makeup":
+        return "Please share the item, size, occasion, deadline and budget in the enquiry form so the artist can prepare a quote."
+    if "finish" in query or "compare" in query:
+        return "Bridal looks start at ₹8,000 for matte, ₹9,000 for soft glam, ₹10,000 for skin finish and ₹12,000 for glow finish. Monika can recommend a finish after discussing your skin, outfit and event."
+    if "include" in query:
+        return "Each bridal look includes the selected makeup finish, bridal hairstyling or hairdo, and saree draping. Travel and special accessories are quoted separately."
+    if any(word in query for word in ("share", "book", "available", "date")):
+        return "Please share your event date, time, place, number of clients and preferred service through the private enquiry form. Monika confirms availability personally."
+    if "bridesmaid" in query:
+        return "The bridesmaid makeup package is ₹5,000, and bridesmaid hairstyling is ₹1,500."
+    if "party" in query:
+        return "The party makeup package starts at ₹3,500."
+    if "price" in query or "cost" in query:
+        return "Bridal looks start at ₹8,000. Bridesmaid makeup is ₹5,000 and party makeup starts at ₹3,500. The Services section has the complete menu."
+    return "I can help with the published service menu. For a personal recommendation, send your date, place, preferred look and number of clients through the enquiry form."
+
+
 @app.get("/api/health")
 def health(response: Response) -> dict[str, str]:
     response.headers["Cache-Control"] = "no-store"
@@ -226,9 +246,9 @@ Visitor question:
             answer = gemini_client().models.generate_content(model="gemini-2.5-flash", contents=prompt).text or "I could not generate an answer from the approved knowledge."
         except Exception:
             logger.exception('{"event":"gemini_generation_failed","request_id":"%s"}', http_request.headers.get("X-Request-ID", "unavailable"))
-            answer = "I could not reach the AI provider just now. Please try again shortly."
+            answer = local_service_answer(request.message, request.domain)
     else:
-        answer = f"I am the {profile.assistant_name}. Configure Gemini and upload knowledge to answer specific questions."
+        answer = local_service_answer(request.message, request.domain)
     return ChatResponse(answer=answer, skills_available=[skill.id for skill in skills_for_domain(request.domain)], sources=sources)
 
 
@@ -255,11 +275,11 @@ def list_reviews() -> dict[str, list[dict[str, Any]]]:
     if not sheets_webhook:
         return {"reviews": []}
     try:
-        data = get_json(f"{sheets_webhook}{'&' if '?' in sheets_webhook else '?'}view=approved_reviews")
+        data = get_json(f"{sheets_webhook}{'&' if '?' in sheets_webhook else '?'}view=reviews")
         if isinstance(data, dict) and data.get("error"):
             raise RuntimeError("Google Sheets rejected the reviews request.")
         reviews = data.get("reviews", []) if isinstance(data, dict) else []
-        return {"reviews": reviews[:20]}
+        return {"reviews": reviews}
     except Exception:
         logger.exception('{"event":"sheets_reviews_read_failed"}')
         return {"reviews": []}
@@ -272,12 +292,12 @@ def create_review(review: ReviewRequest) -> dict[str, str]:
         raise HTTPException(status_code=503, detail="Google Sheets review integration is not configured.")
     try:
         result = post_json(sheets_webhook, {"event": "new_review", "data": review.model_dump()})
-        if not isinstance(result, dict) or result.get("status") != "pending":
+        if not isinstance(result, dict) or result.get("status") not in {"saved", "pending"}:
             raise RuntimeError("Google Sheets did not confirm the review save.")
     except Exception as error:
         logger.exception('{"event":"sheets_review_failed"}')
         raise HTTPException(status_code=502, detail="The review could not be saved.") from error
-    return {"status": "pending", "message": "Your review was submitted for approval."}
+    return {"status": "saved", "message": "Thank you — your review is now visible."}
 
 
 def post_json(url: str, payload: dict[str, Any]) -> Any:

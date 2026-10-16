@@ -19,6 +19,8 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: npm install
+      - name: Test knowledge retrieval
+        run: npm run test:web
       - name: Deploy application to Vercel
         run: |
           runtime_vars=(
