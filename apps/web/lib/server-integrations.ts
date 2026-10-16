@@ -1,5 +1,6 @@
 import "server-only";
 import { retrieveKnowledge } from "./knowledge";
+import { MONIKA_PRICES } from "./site-content";
 
 export type Review = { name: string; rating: number; comment: string; event?: string };
 
@@ -69,12 +70,12 @@ export function localAnswer(message: string, domain = "bridal-makeup") {
     if (query.includes("price") || query.includes("cost")) return "Pencil art starts at ₹3,000, embroidery at ₹2,000 and painting at ₹1,000. Other personalised work is quoted after the details are reviewed.";
     return "Please share the artwork type, occasion, preferred size, reference image, deadline, delivery area and budget in the creative enquiry form.";
   }
-  if (query.includes("finish") || query.includes("compare")) return "Bridal looks start at ₹8,000 for matte, ₹9,000 for soft glam, ₹10,000 for skin finish and ₹12,000 for glow finish. Monika can recommend a finish after discussing your skin, outfit and event.";
+  if (query.includes("finish") || query.includes("compare")) return `Bridal looks start at ${MONIKA_PRICES.matte} for matte, ${MONIKA_PRICES.softGlam} for soft glam, ${MONIKA_PRICES.skinFinish} for skin finish and ${MONIKA_PRICES.glow} for glow finish. Monika can recommend a finish after discussing your skin, outfit and event.`;
   if (query.includes("include")) return "Each bridal look includes the selected makeup finish, bridal hairstyling or hairdo, and saree draping. Travel and special accessories are quoted separately.";
   if (["share", "book", "available", "date"].some(word => query.includes(word))) return "Please share your event date, time, place, number of clients and preferred service through the private enquiry form. Monika confirms availability personally.";
-  if (query.includes("bridesmaid")) return "The bridesmaid makeup package is ₹5,000, and bridesmaid hairstyling is ₹1,500.";
-  if (query.includes("party")) return "The party makeup package starts at ₹3,500.";
-  if (query.includes("price") || query.includes("cost")) return "Bridal looks start at ₹8,000. Bridesmaid makeup is ₹5,000 and party makeup starts at ₹3,500. The Services section has the complete menu.";
+  if (query.includes("bridesmaid")) return `The bridesmaid makeup package is ${MONIKA_PRICES.bridesmaid}, and bridesmaid hairstyling is ${MONIKA_PRICES.bridesmaidHair}.`;
+  if (query.includes("party")) return `The party makeup package starts at ${MONIKA_PRICES.party}.`;
+  if (query.includes("price") || query.includes("cost")) return `Bridal looks start at ${MONIKA_PRICES.matte}. Bridesmaid makeup is ${MONIKA_PRICES.bridesmaid} and party makeup starts at ${MONIKA_PRICES.party}. The Services section has the complete menu.`;
   return "I can help with the published service menu. For a personal recommendation, send your date, place, preferred look and number of clients through the enquiry form.";
 }
 

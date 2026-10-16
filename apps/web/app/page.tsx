@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { ChatWidget } from "./components/chat-widget";
 import { ThemeToggle } from "./components/theme-toggle";
+import { MONIKA_PRICES } from "../lib/site-content";
 
 type GalleryImage = { src: string; label: string };
 type ServiceItem = { id: string; name: string; description?: string; price: string };
@@ -17,14 +18,14 @@ const instagram = isBridal
   : "https://www.instagram.com/crafts.by.vani";
 
 const bridalServices: ServiceItem[] = [
-  { id: "matte", name: "Matte Finish Bridal Look", price: "₹8,000", description: "A polished, shine-controlled finish with graceful definition." },
-  { id: "soft-glam", name: "Soft Glam Bridal Look", price: "₹9,000", description: "Refined eyes, soft radiance and an effortlessly elegant finish." },
-  { id: "skin-finish", name: "Skin Finish Bridal Look", price: "₹10,000", description: "Fresh, skin-like coverage designed to look beautiful in person and on camera." },
-  { id: "glow", name: "Glow Finish Bridal Look", price: "₹12,000", description: "A luminous, dimensional finish for a radiant bridal presence." },
-  { id: "bridesmaid", name: "Bridesmaid Package", price: "₹5,000", description: "Makeup, hairstyling or hairdo, and saree draping." },
-  { id: "party", name: "Party Makeup Package", price: "₹3,500", description: "Makeup and hairstyling for receptions, engagements and special occasions." },
-  { id: "hair", name: "Bridal Hairstyling", price: "₹2,500", description: "Hairdo tailored to your outfit, accessories and event." },
-  { id: "draping", name: "Saree Draping", price: "₹1,000", description: "Event-ready draping; pre-pleating is available from ₹600." },
+  { id: "matte", name: "Matte Finish Bridal Look", price: MONIKA_PRICES.matte, description: "A polished, shine-controlled finish with graceful definition." },
+  { id: "soft-glam", name: "Soft Glam Bridal Look", price: MONIKA_PRICES.softGlam, description: "Refined eyes, soft radiance and an effortlessly elegant finish." },
+  { id: "skin-finish", name: "Skin Finish Bridal Look", price: MONIKA_PRICES.skinFinish, description: "Fresh, skin-like coverage designed to look beautiful in person and on camera." },
+  { id: "glow", name: "Glow Finish Bridal Look", price: MONIKA_PRICES.glow, description: "A luminous, dimensional finish for a radiant bridal presence." },
+  { id: "bridesmaid", name: "Bridesmaid Package", price: MONIKA_PRICES.bridesmaid, description: "Makeup, hairstyling or hairdo, and saree draping." },
+  { id: "party", name: "Party Makeup Package", price: MONIKA_PRICES.party, description: "Makeup and hairstyling for receptions, engagements and special occasions." },
+  { id: "hair", name: "Bridal Hairstyling", price: MONIKA_PRICES.bridalHair, description: "Hairdo tailored to your outfit, accessories and event." },
+  { id: "draping", name: "Saree Draping", price: MONIKA_PRICES.sareeDraping, description: `Event-ready draping; pre-pleating is available from ${MONIKA_PRICES.prePleating}.` },
 ];
 
 const craftServices: ServiceItem[] = [

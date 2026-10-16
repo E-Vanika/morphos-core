@@ -14,6 +14,10 @@ A professional bridal and self-care website with transparent pricing, a portfoli
 
 All listed secrets have already been added according to the project handoff. Do not commit their values to this repository.
 
+## Content maintenance
+
+Use the [Monika Glam Up content guide](apps/web/MONIKA_GLAMUP_GUIDE.md) to replace the visible photos, update prices from one shared file, change the Instagram link, or update the logo.
+
 ## Included pages and features
 
 - Monika Glam Up bridal home page with the supplied services and prices
@@ -25,7 +29,7 @@ All listed secrets have already been added according to the project handoff. Do 
 - Optional Telegram alert after an enquiry is safely stored
 - MCP service-menu, concierge, and enquiry tools
 
-The public APIs and MCP endpoint are native Next.js route handlers inside `apps/web`, so they work when Vercel's Root Directory is `apps/web`. Supabase is not required for the production customer journey. The legacy FastAPI implementation remains as a compatibility/reference path.
+The public APIs and MCP endpoint are native Next.js route handlers inside `apps/web`. Vercel builds them from the repository root using the workspace build command. Supabase is not required for the production customer journey. The legacy FastAPI implementation remains as a compatibility/reference path.
 
 ## Engineering case study
 

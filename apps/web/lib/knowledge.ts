@@ -1,3 +1,5 @@
+import { MONIKA_PRICES } from "./site-content";
+
 export type KnowledgeChunk = {
   id: string;
   domain: "bridal-makeup" | "art-craft";
@@ -11,7 +13,7 @@ export const KNOWLEDGE_CHUNKS: KnowledgeChunk[] = [
     id: "bridal-finishes",
     domain: "bridal-makeup",
     title: "Monika Glam Up service guide — bridal finishes",
-    content: "Matte Finish Bridal Look starts at ₹8,000. Soft Glam Bridal Look starts at ₹9,000. Skin Finish Bridal Look starts at ₹10,000. Glow Finish Bridal Look starts at ₹12,000.",
+    content: `Matte Finish Bridal Look starts at ${MONIKA_PRICES.matte}. Soft Glam Bridal Look starts at ${MONIKA_PRICES.softGlam}. Skin Finish Bridal Look starts at ${MONIKA_PRICES.skinFinish}. Glow Finish Bridal Look starts at ${MONIKA_PRICES.glow}.`,
     keywords: ["bridal", "bride", "matte", "soft glam", "skin finish", "glow", "price", "cost", "compare"],
   },
   {
@@ -25,7 +27,7 @@ export const KNOWLEDGE_CHUNKS: KnowledgeChunk[] = [
     id: "occasion-services",
     domain: "bridal-makeup",
     title: "Monika Glam Up service guide — occasion services",
-    content: "Bridesmaid makeup is ₹5,000. Bridesmaid hairstyling is ₹1,500. Party makeup starts at ₹3,500. Bridal hairstyling is ₹2,500. Saree draping is ₹1,000 and pre-pleating starts at ₹600.",
+    content: `Bridesmaid makeup is ${MONIKA_PRICES.bridesmaid}. Bridesmaid hairstyling is ${MONIKA_PRICES.bridesmaidHair}. Party makeup starts at ${MONIKA_PRICES.party}. Bridal hairstyling is ${MONIKA_PRICES.bridalHair}. Saree draping is ${MONIKA_PRICES.sareeDraping} and pre-pleating starts at ${MONIKA_PRICES.prePleating}.`,
     keywords: ["bridesmaid", "party", "occasion", "hair", "hairstyle", "saree", "draping", "pre pleating", "price"],
   },
   {

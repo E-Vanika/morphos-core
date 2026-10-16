@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useRef, useState } from "react";
+import { MONIKA_PRICES } from "../../lib/site-content";
 
 type Message = { role: "assistant" | "user"; text: string; sources?: string[] };
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "/api";
@@ -10,12 +11,12 @@ const prompts = isBridal ? ["Compare bridal finishes", "What is included?", "Wha
 function serviceGuideAnswer(question: string) {
   const query = question.toLowerCase();
   if (!isBridal) return "Please describe the item, size, occasion, deadline and budget in the enquiry form so the artist can prepare a quote.";
-  if (query.includes("finish") || query.includes("compare")) return "Bridal looks start at ₹8,000 for matte, ₹9,000 for soft glam, ₹10,000 for skin finish and ₹12,000 for glow finish. Monika will recommend the finish after discussing your skin, outfit and event.";
+  if (query.includes("finish") || query.includes("compare")) return `Bridal looks start at ${MONIKA_PRICES.matte} for matte, ${MONIKA_PRICES.softGlam} for soft glam, ${MONIKA_PRICES.skinFinish} for skin finish and ${MONIKA_PRICES.glow} for glow finish. Monika will recommend the finish after discussing your skin, outfit and event.`;
   if (query.includes("include")) return "Each bridal look includes the selected makeup finish, bridal hairstyling or hairdo, and saree draping. Travel and special accessories are quoted separately.";
   if (query.includes("share") || query.includes("book") || query.includes("available")) return "Please share your event date, time, place, number of clients and preferred service through the private enquiry form. Availability is confirmed personally by Monika.";
-  if (query.includes("bridesmaid")) return "The bridesmaid makeup package is ₹5,000, and bridesmaid hairstyling is ₹1,500.";
-  if (query.includes("party")) return "The party makeup package is ₹3,500.";
-  if (query.includes("price") || query.includes("cost")) return "Bridal looks start at ₹8,000. Bridesmaid makeup is ₹5,000 and party makeup is ₹3,500. The Services section has the complete menu.";
+  if (query.includes("bridesmaid")) return `The bridesmaid makeup package is ${MONIKA_PRICES.bridesmaid}, and bridesmaid hairstyling is ${MONIKA_PRICES.bridesmaidHair}.`;
+  if (query.includes("party")) return `The party makeup package is ${MONIKA_PRICES.party}.`;
+  if (query.includes("price") || query.includes("cost")) return `Bridal looks start at ${MONIKA_PRICES.matte}. Bridesmaid makeup is ${MONIKA_PRICES.bridesmaid} and party makeup is ${MONIKA_PRICES.party}. The Services section has the complete menu.`;
   return "I can help with the published service menu. For a personal recommendation, send your date, place, preferred look and number of clients through the enquiry form.";
 }
 

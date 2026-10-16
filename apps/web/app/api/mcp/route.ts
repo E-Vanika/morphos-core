@@ -1,18 +1,19 @@
 import { timingSafeEqual } from "node:crypto";
 import { geminiAnswer, sheetsPost, telegramEnquiry } from "../../../lib/server-integrations";
+import { MONIKA_PRICES } from "../../../lib/site-content";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const services = [
-  { category: "bridal", name: "Matte Finish Bridal Look", price: "₹8,000" },
-  { category: "bridal", name: "Soft Glam Bridal Look", price: "₹9,000" },
-  { category: "bridal", name: "Skin Finish Bridal Look", price: "₹10,000" },
-  { category: "bridal", name: "Glow Finish Bridal Look", price: "₹12,000" },
-  { category: "bridesmaid", name: "Bridesmaid Makeup Package", price: "₹5,000" },
-  { category: "party", name: "Party Makeup Package", price: "₹3,500" },
-  { category: "hair", name: "Bridal Hairstyling", price: "₹2,500" },
-  { category: "saree", name: "Saree Draping", price: "₹1,000" },
+  { category: "bridal", name: "Matte Finish Bridal Look", price: MONIKA_PRICES.matte },
+  { category: "bridal", name: "Soft Glam Bridal Look", price: MONIKA_PRICES.softGlam },
+  { category: "bridal", name: "Skin Finish Bridal Look", price: MONIKA_PRICES.skinFinish },
+  { category: "bridal", name: "Glow Finish Bridal Look", price: MONIKA_PRICES.glow },
+  { category: "bridesmaid", name: "Bridesmaid Makeup Package", price: MONIKA_PRICES.bridesmaid },
+  { category: "party", name: "Party Makeup Package", price: MONIKA_PRICES.party },
+  { category: "hair", name: "Bridal Hairstyling", price: MONIKA_PRICES.bridalHair },
+  { category: "saree", name: "Saree Draping", price: MONIKA_PRICES.sareeDraping },
 ];
 
 const tools = [
