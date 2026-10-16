@@ -4,7 +4,7 @@ import { FormEvent, useRef, useState } from "react";
 
 type Message = { role: "assistant" | "user"; text: string; sources?: string[] };
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "/api";
-const isBridal = process.env.NEXT_PUBLIC_SITE_KIND === "bridal";
+const isBridal = process.env.NEXT_PUBLIC_SITE_KIND !== "craft";
 const prompts = isBridal ? ["Compare bridal finishes", "What is included?", "What should I share?"] : ["What can I customise?", "How does pricing work?"];
 
 function serviceGuideAnswer(question: string) {
@@ -43,13 +43,13 @@ export function ChatWidget() {
 
   function send(event: FormEvent) { event.preventDefault(); void ask(input.trim()); }
 
-  return <aside className="chat-widget" aria-label="AI bridal concierge">
+  return <aside className="chat-widget" aria-label={isBridal ? "AI bridal concierge" : "AI creative concierge"}>
     {open && <section className="chat-window" aria-live="polite">
       <div className="chat-title"><div><span className="online-dot"/><span><strong>{isBridal ? "Bridal concierge" : "Creative concierge"}</strong><small>AI · grounded in the service guide</small></span></div><button aria-label="Close concierge" onClick={() => setOpen(false)}>×</button></div>
       <div className="chat-messages">{messages.map((message,index)=><div className={`message ${message.role}`} key={`${message.role}-${index}`}><span>{message.text}</span>{message.sources && message.sources.length > 0 && <small className="message-sources">Source: {message.sources.join(" · ")}</small>}</div>)}{messages.length===1&&<div className="quick-prompts">{prompts.map(prompt=><button key={prompt} onClick={()=>void ask(prompt)}>{prompt}</button>)}</div>}{loading&&<p className="message assistant">Retrieving the service guide…</p>}</div>
       <form onSubmit={send}><input ref={inputRef} value={input} onChange={event=>setInput(event.target.value)} placeholder="Ask about services or pricing…" aria-label="Message the bridal concierge"/><button disabled={loading||!input.trim()}>Send</button></form>
       <p className="chat-disclaimer">AI can explain services; Monika confirms availability and final quotes.</p>
     </section>}
-    <button className="chat-launcher" onClick={()=>{setOpen(current=>!current);setTimeout(()=>inputRef.current?.focus(),50)}} aria-expanded={open}>{open?"Close":<><span>✦</span> Ask the bridal concierge</>}</button>
+    <button className="chat-launcher" onClick={()=>{setOpen(current=>!current);setTimeout(()=>inputRef.current?.focus(),50)}} aria-expanded={open}>{open?"Close":<><span>✦</span> Ask the {isBridal ? "bridal" : "creative"} concierge</>}</button>
   </aside>;
 }

@@ -165,10 +165,32 @@ Application defaults:
 
 ```env
 NEXT_PUBLIC_API_URL=/api
-NEXT_PUBLIC_SITE_KIND=bridal
 ALLOWED_ORIGINS=http://localhost:3000
 LOG_LEVEL=INFO
 ```
+
+Monika Glam Up is the safe default. Only the Crafts project needs a brand variable:
+
+| Vercel project | `NEXT_PUBLIC_SITE_KIND` |
+|---|---|
+| `monika-glamup` | Leave unset (defaults to `bridal`) |
+| `crafts-by-vani` | `craft` |
+
+The application safely defaults to `bridal` when the variable is missing. The GitHub workflow supplies `craft` only to Crafts by Vani. If Vercel Git Integration is enabled, add the same Crafts-only value under **Settings → Environment Variables** so automatic and workflow deployments behave identically.
+
+### Canonical Vercel project settings
+
+Both projects must deploy from the repository root. In **Settings → Build and Deployment**, use:
+
+| Setting | Value |
+|---|---|
+| Root Directory | Leave blank (repository root) |
+| Framework Preset | Next.js |
+| Install Command | `npm install` |
+| Build Command | `npm run build:web` |
+| Output Directory | `apps/web/.next` |
+
+Do not set Root Directory to `apps/web`; doing so makes Vercel look for `apps/web/apps/web/.next`.
 
 ## Local development
 
@@ -187,7 +209,7 @@ npm run build:web
 python -m compileall apps/api/app api
 ```
 
-The web package intentionally provides both `build` and `build:web`. This makes the configured Vercel command work whether the Vercel project root is the repository or `apps/web`.
+The Vercel build runs from the repository root. The root `build:web` script builds the `@morphos/web` workspace and writes the result to `apps/web/.next`.
 
 ## Deployment checks
 
@@ -203,8 +225,10 @@ Delete test rows from the Sheet afterward.
 
 The GitHub workflow deploys:
 
-- `monika-glamup` with `NEXT_PUBLIC_SITE_KIND=bridal`
+- `monika-glamup` with the default bridal brand (no site-kind override)
 - `crafts-by-vani` with `NEXT_PUBLIC_SITE_KIND=craft`
+
+After each deployment, the workflow verifies the expected page title, brand favicon and `/api/health` site kind. A brand collision fails the workflow instead of publishing silently.
 
 ## API and MCP
 
