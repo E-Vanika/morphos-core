@@ -196,6 +196,8 @@ Both projects must deploy from the repository root. In **Settings → Build and 
 
 Do not set Root Directory to `apps/web`; doing so makes Vercel look for `apps/web/apps/web/.next`.
 
+For compatibility with older Vercel projects that still have Root Directory set to `apps/web`, `apps/web/vercel.json` uses `npm run build` and `.next`. The repository-root configuration remains the recommended layout, but either root setting now resolves to the correct output directory instead of duplicating the path.
+
 ## Local development
 
 Requirements: Node.js 22+ and Python 3.12+.
