@@ -5,7 +5,9 @@ A professional bridal and self-care website with transparent pricing, a portfoli
 ## What you still need to do
 
 - [ ] Replace your Apps Script project code with [the current script](docs/google-sheets-apps-script.gs).
+- [ ] Run `setupSheets` once so review IDs and the `Site Content` tab are created.
 - [ ] In Apps Script, choose **Deploy → Manage deployments → Edit → New version → Deploy**. Editing code alone does not update the live webhook.
+- [ ] Add `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` to the Monika Vercel project. Add the Supabase variables only if administrator image uploads are required.
 - [ ] Push this repository to `main` and wait for both Vercel deployments to finish.
 - [ ] Open `/api/health` on the Monika domain and confirm `google_sheets`, `gemini`, `telegram`, and `mcp` are all `true`.
 - [ ] Submit one test enquiry and confirm that it appears in the Sheet's `Enquiries` tab.
@@ -27,6 +29,7 @@ Use the [Monika Glam Up content guide](apps/web/MONIKA_GLAMUP_GUIDE.md) to repla
 - Built-in answers for common service questions when the AI provider is briefly unavailable
 - Google Sheets as the operational store for enquiries and reviews
 - Optional Telegram alert after an enquiry is safely stored
+- Private administrator dashboard for services, prices, featured images and review deletion
 - MCP service-menu, concierge, and enquiry tools
 
 The public APIs and MCP endpoint are native Next.js route handlers inside `apps/web`. Vercel builds them from the repository root using the workspace build command. Supabase is not required for the production customer journey. The legacy FastAPI implementation remains as a compatibility/reference path.
@@ -124,7 +127,7 @@ The following are intentionally documented rather than claimed as completed:
 
 ## Google Sheets setup
 
-Google Sheets is the source of truth for enquiries and reviews.
+Google Sheets is the source of truth for enquiries, reviews and administrator-managed site content.
 
 1. Open [script.google.com](https://script.google.com) and open the Apps Script project connected to your Sheet.
 2. Paste [docs/google-sheets-apps-script.gs](docs/google-sheets-apps-script.gs).
@@ -145,7 +148,9 @@ Google Sheets is the source of truth for enquiries and reviews.
 
 7. Save that complete URL as `GOOGLE_SHEETS_WEBHOOK_URL` in GitHub Actions and Vercel.
 
-The script creates `Enquiries` and `Reviews` tabs. Reviews are public immediately. The old `Approved` column remains for backward compatibility but is no longer used as a filter.
+The script creates `Enquiries`, `Reviews` and `Site Content` tabs. It also adds stable IDs to existing reviews so an administrator can delete a selected review safely. Reviews are public immediately. The old `Approved` column remains for backward compatibility but is no longer used as a filter.
+
+After every Apps Script code update, run `setupSheets` once and deploy a **new web-app version**. Saving the script without creating a new deployment version does not update the live webhook.
 
 ## Environment variables
 
@@ -157,6 +162,34 @@ GEMINI_API_KEY=...
 MCP_API_KEY=...
 NEXT_PUBLIC_INSTAGRAM_URL=https://www.instagram.com/monika_glamup/
 ```
+
+Required for `/admin`:
+
+```env
+ADMIN_PASSWORD=a-strong-password-with-at-least-12-characters
+ADMIN_SESSION_SECRET=a-random-secret-with-at-least-32-characters
+```
+
+Required only for image uploads from `/admin`:
+
+```env
+SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVER_ONLY_SERVICE_ROLE_KEY
+BRIDAL_BUCKET=bridal-images
+```
+
+Create `BRIDAL_BUCKET` as a **public Supabase Storage bucket**. Keep `SUPABASE_SERVICE_ROLE_KEY` server-side; never prefix it with `NEXT_PUBLIC_` or commit it. The administrator can still manage reviews and services when Supabase uploads are not configured.
+
+### Administrator dashboard
+
+Open `/admin` on the Monika domain and sign in with `ADMIN_PASSWORD`. The eight-hour session is stored in a signed, HttpOnly, same-site cookie. From the dashboard an administrator can:
+
+- edit service names, descriptions and displayed prices;
+- add additional services;
+- replace the large hero, small overlay and experience images;
+- permanently delete an unwanted review.
+
+Administrator edits are sent server-side to Google Sheets. Uploaded files go directly from the protected server route to Supabase Storage; the service-role key is never sent to the browser.
 
 Optional Telegram alerts:
 

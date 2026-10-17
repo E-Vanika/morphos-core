@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { ChatWidget } from "./components/chat-widget";
 import { ThemeToggle } from "./components/theme-toggle";
-import { MONIKA_PRICES } from "../lib/site-content";
+import { DEFAULT_MONIKA_IMAGES, DEFAULT_MONIKA_SERVICES, type SiteImage } from "../lib/site-content";
 
 type GalleryImage = { src: string; label: string };
 type ServiceItem = { id: string; name: string; description?: string; price: string };
@@ -16,17 +16,6 @@ const isBridal = process.env.NEXT_PUBLIC_SITE_KIND !== "craft";
 const instagram = isBridal
   ? (process.env.NEXT_PUBLIC_INSTAGRAM_URL ?? "https://www.instagram.com/monika_glamup/")
   : "https://www.instagram.com/crafts.by.vani";
-
-const bridalServices: ServiceItem[] = [
-  { id: "matte", name: "Matte Finish Bridal Look", price: MONIKA_PRICES.matte, description: "A polished, shine-controlled finish with graceful definition." },
-  { id: "soft-glam", name: "Soft Glam Bridal Look", price: MONIKA_PRICES.softGlam, description: "Refined eyes, soft radiance and an effortlessly elegant finish." },
-  { id: "skin-finish", name: "Skin Finish Bridal Look", price: MONIKA_PRICES.skinFinish, description: "Fresh, skin-like coverage designed to look beautiful in person and on camera." },
-  { id: "glow", name: "Glow Finish Bridal Look", price: MONIKA_PRICES.glow, description: "A luminous, dimensional finish for a radiant bridal presence." },
-  { id: "bridesmaid", name: "Bridesmaid Package", price: MONIKA_PRICES.bridesmaid, description: "Makeup, hairstyling or hairdo, and saree draping." },
-  { id: "party", name: "Party Makeup Package", price: MONIKA_PRICES.party, description: "Makeup and hairstyling for receptions, engagements and special occasions." },
-  { id: "hair", name: "Bridal Hairstyling", price: MONIKA_PRICES.bridalHair, description: "Hairdo tailored to your outfit, accessories and event." },
-  { id: "draping", name: "Saree Draping", price: MONIKA_PRICES.sareeDraping, description: `Event-ready draping; pre-pleating is available from ${MONIKA_PRICES.prePleating}.` },
-];
 
 const craftServices: ServiceItem[] = [
   { id: "pencil", name: "Pencil Art", price: "₹3,000", description: "Detailed, hand-drawn portraits created from your chosen photograph." },
@@ -50,7 +39,8 @@ const gallery: GalleryImage[] = isBridal
     ];
 
 export default function Home() {
-  const services = isBridal ? bridalServices : craftServices;
+  const [services, setServices] = useState<ServiceItem[]>(isBridal ? DEFAULT_MONIKA_SERVICES : craftServices);
+  const [siteImages, setSiteImages] = useState<SiteImage[]>(DEFAULT_MONIKA_IMAGES);
   const [status, setStatus] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [reviewStatus, setReviewStatus] = useState("");
@@ -59,11 +49,19 @@ export default function Home() {
 
   useEffect(() => {
     if (!isBridal) return;
+    fetch(`${apiUrl}/v1/site-content`)
+      .then(response => response.ok ? response.json() : Promise.reject())
+      .then(data => { if (Array.isArray(data.services)) setServices(data.services); if (Array.isArray(data.images)) setSiteImages(data.images); })
+      .catch(() => undefined);
     fetch(`${apiUrl}/v1/reviews`)
       .then(response => response.ok ? response.json() : Promise.reject())
       .then(data => setReviews((data.reviews ?? []).filter((review: Review) => review.name && review.comment && review.rating >= 1 && review.rating <= 5)))
       .catch(() => setReviews([]));
   }, []);
+
+  const heroMain = siteImages.find(image => image.id === "hero-main") ?? DEFAULT_MONIKA_IMAGES[0];
+  const heroDetail = siteImages.find(image => image.id === "hero-detail") ?? DEFAULT_MONIKA_IMAGES[1];
+  const experienceImage = siteImages.find(image => image.id === "experience") ?? DEFAULT_MONIKA_IMAGES[2];
 
   async function submitEnquiry(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -115,12 +113,12 @@ export default function Home() {
     <div className="announcement">Now accepting bridal, bridesmaid and special-event enquiries</div>
     <header><a className="brand" href="#top"><img className="brand-logo-mark" src="/monika-glamup-icon.svg" alt=""/><span>Monika Glam Up<small>Bridal beauty artistry</small></span></a><nav><a href="#services">Services</a><a href="/reviews">Reviews</a><a href="/mamo-self-care">Self-care</a><a href={instagram} target="_blank" rel="noreferrer">Instagram ↗</a></nav><div className="header-actions"><ThemeToggle/><a className="outline" href="#enquire">Check your date</a></div></header>
 
-    <section id="top" className="hero bridal-hero"><div className="hero-copy"><p className="eyebrow">BRIDAL MAKEUP · HAIRSTYLING · SAREE DRAPING</p><h1>Your moment,<br/><i>beautifully you.</i></h1><p className="lede">Personalised bridal artistry that brings your outfit, features and celebration together in one considered look.</p><div className="hero-actions"><a className="button" href="#enquire">Check availability</a><a className="text-button" href="#services">Explore bridal finishes →</a></div><div className="hero-assurance" aria-label="Booking assurances"><span>Transparent pricing</span><span>Private enquiry</span><span>Personal confirmation</span></div><div className="hero-facts"><span><strong>4</strong> bridal finishes</span><span><strong>1</strong> complete look</span><span><strong>Tailored</strong> to your event</span></div></div><div className="hero-visual" aria-label="Monika Glam Up bridal work"><img className="hero-main-image" src="/gallery/bridal-bridesmaid-makeup.jpeg" alt="Bridal makeup by Monika Glam Up"/><div className="hero-detail"><img src="/gallery/bridal-hairstyle.jpeg" alt="Bridal hairstyling detail"/><p><span>THE SIGNATURE</span>Makeup, hair & draping—planned as one.</p></div></div></section>
+    <section id="top" className="hero bridal-hero"><div className="hero-copy"><p className="eyebrow">BRIDAL MAKEUP · HAIRSTYLING · SAREE DRAPING</p><h1>Your moment,<br/><i>beautifully you.</i></h1><p className="lede">Personalised bridal artistry that brings your outfit, features and celebration together in one considered look.</p><div className="hero-actions"><a className="button" href="#enquire">Check availability</a><a className="text-button" href="#services">Explore bridal finishes →</a></div><div className="hero-assurance" aria-label="Booking assurances"><span>Transparent pricing</span><span>Private enquiry</span><span>Personal confirmation</span></div><div className="hero-facts"><span><strong>4</strong> bridal finishes</span><span><strong>1</strong> complete look</span><span><strong>Tailored</strong> to your event</span></div></div><div className="hero-visual" aria-label="Monika Glam Up bridal work"><img className="hero-main-image" src={heroMain.url} alt={heroMain.alt}/><div className="hero-detail"><img src={heroDetail.url} alt={heroDetail.alt}/><p><span>THE SIGNATURE</span>Makeup, hair & draping—planned as one.</p></div></div></section>
     <section className="promise-strip"><span>Personalised finish</span><span>Complete bridal styling</span><span>On-location service</span><span>Thoughtful look planning</span></section>
 
     <section id="services" className="section service-section"><div className="section-heading"><div><p className="eyebrow">THE SERVICE MENU</p><h2>A finish for<br/><i>every bride.</i></h2></div><p>Each bridal look is adapted to your outfit, skin requirements, event and preferred overall appearance.</p></div><div className="price-grid">{services.slice(0,4).map((service,index)=><article className="price-card" key={service.id}><span className="card-number">0{index+1}</span><h3>{service.name}</h3><p>{service.description}</p><div><small>Starting at</small><strong>{service.price}</strong></div></article>)}</div><div className="included-panel"><p className="eyebrow">EVERY BRIDAL PACKAGE INCLUDES</p><ul><li>Selected bridal makeup finish</li><li>Bridal hairstyling or hairdo</li><li>Saree draping</li><li>Hair finishing and styling support</li><li>Hair extensions when required, by prior discussion</li></ul><p className="fine-print">Lenses, eyelashes, travel, special accessories and customised requirements are quoted separately.</p></div></section>
 
-    <section id="experience" className="experience-section"><div className="experience-image"><img src="/gallery/bridal-reception-hairstyle.jpeg" alt="Reception hairstyle by Monika Glam Up"/><span>Elegant from every angle</span></div><div><p className="eyebrow">BEYOND THE BRIDAL LOOK</p><h2>For every person<br/>and every celebration.</h2><div className="mini-menu">{services.slice(4).map(service=><div key={service.id}><span>{service.name}</span><strong>{service.price}</strong><small>{service.description}</small></div>)}</div></div></section>
+    <section id="experience" className="experience-section"><div className="experience-image"><img src={experienceImage.url} alt={experienceImage.alt}/><span>Elegant from every angle</span></div><div><p className="eyebrow">BEYOND THE BRIDAL LOOK</p><h2>For every person<br/>and every celebration.</h2><div className="mini-menu">{services.slice(4).map(service=><div key={service.id}><span>{service.name}</span><strong>{service.price}</strong><small>{service.description}</small></div>)}</div></div></section>
 
     <section className="process-section"><p className="eyebrow">YOUR BOOKING JOURNEY</p><div className="process-grid"><div><span>01</span><h3>Share your event</h3><p>Date, time, place, number of clients and the services you need.</p></div><div><span>02</span><h3>Plan the look</h3><p>Send your outfit, jewellery, hairstyle references and preferred finish.</p></div><div><span>03</span><h3>Review & confirm</h3><p>Monika reviews availability, travel and requirements before sharing the final quote.</p></div></div></section>
 

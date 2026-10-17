@@ -2,6 +2,12 @@
 
 This guide covers the common updates that can be made without changing the site layout.
 
+## Use the administrator dashboard
+
+After the administrator variables are configured, open `/admin` on the Monika Glam Up domain. The dashboard can edit prices and services, add new services, replace the three featured images and delete unwanted reviews. These edits are stored in Google Sheets and Supabase rather than in the Git repository.
+
+The file-editing instructions below remain useful as safe defaults and for developer-maintained changes. When no administrator override exists, the public site automatically uses these static values and images.
+
 ## Change the visible photos
 
 All permanent site photos are in `apps/web/public/gallery/`. The simplest and safest method is to replace an existing file with a new image that has **the exact same filename and extension**. No code change is then required.

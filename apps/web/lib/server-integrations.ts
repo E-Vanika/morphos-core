@@ -2,7 +2,7 @@ import "server-only";
 import { retrieveKnowledge } from "./knowledge";
 import { MONIKA_PRICES } from "./site-content";
 
-export type Review = { name: string; rating: number; comment: string; event?: string };
+export type Review = { id?: string; name: string; rating: number; comment: string; event?: string };
 
 function required(name: string) {
   const value = process.env[name];
@@ -10,7 +10,7 @@ function required(name: string) {
   return value;
 }
 
-export async function sheetsPost(event: "new_enquiry" | "new_review", data: Record<string, unknown>) {
+export async function sheetsPost(event: "new_enquiry" | "new_review" | "delete_review" | "upsert_service" | "delete_service" | "upsert_image", data: Record<string, unknown>) {
   const response = await fetch(required("GOOGLE_SHEETS_WEBHOOK_URL"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -26,13 +26,18 @@ export async function sheetsPost(event: "new_enquiry" | "new_review", data: Reco
   return result;
 }
 
-export async function sheetsReviews(): Promise<Review[]> {
+export async function sheetsGet<T>(view: "reviews" | "admin_reviews" | "site_content") {
   const webhook = required("GOOGLE_SHEETS_WEBHOOK_URL");
-  const url = `${webhook}${webhook.includes("?") ? "&" : "?"}view=reviews`;
+  const url = `${webhook}${webhook.includes("?") ? "&" : "?"}view=${view}`;
   const response = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(12_000) });
   if (!response.ok) throw new Error(`Google Sheets returned HTTP ${response.status}.`);
-  const result = await response.json() as { reviews?: Review[]; error?: string };
+  const result = await response.json() as T & { error?: string };
   if (result.error) throw new Error(result.error);
+  return result;
+}
+
+export async function sheetsReviews(): Promise<Review[]> {
+  const result = await sheetsGet<{ reviews?: Review[] }>("reviews");
   return (result.reviews ?? []).filter(review => review.name && review.comment && review.rating >= 1 && review.rating <= 5);
 }
 
