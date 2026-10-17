@@ -61,7 +61,7 @@ export async function telegramEnquiry(data: Record<string, unknown>) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ chat_id: chatId, text }),
     cache: "no-store",
-    signal: AbortSignal.timeout(10_000),
+    signal: AbortSignal.timeout(5_000),
   });
   if (!response.ok) throw new Error(`Telegram returned HTTP ${response.status}.`);
   const result = await response.json() as { ok?: boolean };

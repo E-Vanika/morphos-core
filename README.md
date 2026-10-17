@@ -7,7 +7,7 @@ A professional bridal and self-care website with transparent pricing, a portfoli
 - [ ] Replace your Apps Script project code with [the current script](docs/google-sheets-apps-script.gs).
 - [ ] Run `setupSheets` once so review IDs and the `Site Content` tab are created.
 - [ ] In Apps Script, choose **Deploy → Manage deployments → Edit → New version → Deploy**. Editing code alone does not update the live webhook.
-- [ ] Add `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` to the Monika Vercel project. Add the Supabase variables only if administrator image uploads are required.
+- [ ] Add `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` as GitHub Actions secrets. The deployment workflow passes them only to Monika; no duplicate Vercel maintenance is required.
 - [ ] Push this repository to `main` and wait for both Vercel deployments to finish.
 - [ ] Open `/api/health` on the Monika domain and confirm `google_sheets`, `gemini`, `telegram`, and `mcp` are all `true`.
 - [ ] Submit one test enquiry and confirm that it appears in the Sheet's `Enquiries` tab.
@@ -170,6 +170,8 @@ ADMIN_PASSWORD=a-strong-password-with-at-least-12-characters
 ADMIN_SESSION_SECRET=a-random-secret-with-at-least-32-characters
 ```
 
+Add these under **GitHub repository → Settings → Secrets and variables → Actions → New repository secret**. The deployment workflow injects them into the Monika production deployment and deliberately does not expose them to Crafts by Vani. After changing either value, run the **Deploy portfolio** workflow again. If Vercel Git Integration also creates a separate automatic deployment, let the GitHub Actions deployment finish so its production deployment—with the injected secrets—becomes active.
+
 Required only for image uploads from `/admin`:
 
 ```env
@@ -179,6 +181,8 @@ BRIDAL_BUCKET=bridal-images
 ```
 
 Create `BRIDAL_BUCKET` as a **public Supabase Storage bucket**. Keep `SUPABASE_SERVICE_ROLE_KEY` server-side; never prefix it with `NEXT_PUBLIC_` or commit it. The administrator can still manage reviews and services when Supabase uploads are not configured.
+
+The WhatsApp destination defaults to `https://wa.me/message/FMLPL4OHORWNC1`. To change it later, add the optional GitHub Actions secret `NEXT_PUBLIC_WHATSAPP_URL` and redeploy.
 
 ### Administrator dashboard
 

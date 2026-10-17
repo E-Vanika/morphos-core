@@ -14,6 +14,12 @@ jobs:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       GOOGLE_SHEETS_WEBHOOK_URL: ${{ secrets.GOOGLE_SHEETS_WEBHOOK_URL }}
+      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+      ADMIN_SESSION_SECRET: ${{ secrets.ADMIN_SESSION_SECRET }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      BRIDAL_BUCKET: ${{ secrets.BRIDAL_BUCKET }}
+      NEXT_PUBLIC_WHATSAPP_URL: ${{ secrets.NEXT_PUBLIC_WHATSAPP_URL }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -27,6 +33,14 @@ jobs:
         run: test -d apps/web/.next
       - name: Deploy application to Vercel
         run: |
+          if [ ${#ADMIN_PASSWORD} -lt 12 ]; then
+            echo "ADMIN_PASSWORD must be configured as a GitHub Actions secret with at least 12 characters."
+            exit 1
+          fi
+          if [ ${#ADMIN_SESSION_SECRET} -lt 32 ]; then
+            echo "ADMIN_SESSION_SECRET must be configured as a GitHub Actions secret with at least 32 characters."
+            exit 1
+          fi
           runtime_vars=(
             "GEMINI_API_KEY=$GEMINI_API_KEY"
             "MCP_API_KEY=$MCP_API_KEY"
@@ -37,10 +51,12 @@ jobs:
             "DOMAIN_PRESET=professional-services"
             "NEXT_PUBLIC_API_URL=/api"
             "NEXT_PUBLIC_INSTAGRAM_URL=$NEXT_PUBLIC_INSTAGRAM_URL"
+            "NEXT_PUBLIC_WHATSAPP_URL=${NEXT_PUBLIC_WHATSAPP_URL:-https://wa.me/message/FMLPL4OHORWNC1}"
           )
           build_vars=(
             "NEXT_PUBLIC_API_URL=/api"
             "NEXT_PUBLIC_INSTAGRAM_URL=$NEXT_PUBLIC_INSTAGRAM_URL"
+            "NEXT_PUBLIC_WHATSAPP_URL=${NEXT_PUBLIC_WHATSAPP_URL:-https://wa.me/message/FMLPL4OHORWNC1}"
           )
           args=()
           for value in "${runtime_vars[@]}"; do args+=(--env "$value"); done
@@ -55,6 +71,14 @@ jobs:
             local site_args=()
             if [ -n "$site_kind" ]; then
               site_args+=(--env "NEXT_PUBLIC_SITE_KIND=$site_kind" --build-env "NEXT_PUBLIC_SITE_KIND=$site_kind")
+            else
+              site_args+=(
+                --env "ADMIN_PASSWORD=$ADMIN_PASSWORD"
+                --env "ADMIN_SESSION_SECRET=$ADMIN_SESSION_SECRET"
+                --env "SUPABASE_URL=$SUPABASE_URL"
+                --env "SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY"
+                --env "BRIDAL_BUCKET=${BRIDAL_BUCKET:-bridal-images}"
+              )
             fi
             rm -rf .vercel
             npx vercel deploy --prod --yes --name "$project_name" --token "$VERCEL_TOKEN" "${args[@]}" "${site_args[@]}"
@@ -63,6 +87,9 @@ jobs:
             grep --fixed-strings --quiet "$expected_icon" <<< "$page"
             health="$(curl --fail --silent --show-error --retry 6 --retry-delay 5 --retry-all-errors "https://$project_name.vercel.app/api/health")"
             grep --fixed-strings --quiet "\"site_kind\":\"$expected_health\"" <<< "$health"
+            if [ -z "$site_kind" ]; then
+              grep --fixed-strings --quiet '"admin":true' <<< "$health"
+            fi
             echo "Verified $expected_brand at https://$project_name.vercel.app/"
           }
           deploy_site crafts-by-vani craft "Crafts by Vani" "<title>Crafts by Vani" "crafts-by-vani-icon.svg" craft
