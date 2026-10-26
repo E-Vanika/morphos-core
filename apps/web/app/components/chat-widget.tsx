@@ -37,7 +37,7 @@ export function ChatWidget() {
       const response = await fetch(`${apiUrl}/v1/chat`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: question, domain: isBridal ? "bridal-makeup" : "art-craft" }) });
       if (!response.ok) throw new Error("Chat unavailable");
       const data: { answer?: string; sources?: string[] } = await response.json();
-      setMessages(current => [...current, { role: "assistant", text: data.answer ?? "I don’t have that detail yet. Please send an enquiry and Monika can confirm.", sources: data.sources }]);
+      setMessages(current => [...current, { role: "assistant", text: data.answer ?? (isBridal ? "I don’t have that detail yet. Please send an enquiry and Monika can confirm." : "I don’t have that detail yet. Please send an enquiry and Vani can confirm."), sources: data.sources }]);
     } catch {
       setMessages(current => [...current, { role: "assistant", text: serviceGuideAnswer(question) }]);
     } finally { setLoading(false); }
@@ -49,8 +49,8 @@ export function ChatWidget() {
     {open && <section className="chat-window" aria-live="polite">
       <div className="chat-title"><div><span className="online-dot"/><span><strong>{isBridal ? "Bridal concierge" : "Creative concierge"}</strong><small>AI · grounded in the service guide</small></span></div><button aria-label="Close concierge" onClick={() => setOpen(false)}>×</button></div>
       <div className="chat-messages">{messages.map((message,index)=><div className={`message ${message.role}`} key={`${message.role}-${index}`}><span>{message.text}</span>{message.sources && message.sources.length > 0 && <small className="message-sources">Source: {message.sources.join(" · ")}</small>}{message.role === "assistant" && <div className="message-actions"><a href="#services" onClick={()=>setOpen(false)}>View services</a><a href="#enquire" onClick={()=>setOpen(false)}>Send enquiry</a><a href={contactUrl} target="_blank" rel="noreferrer">{isBridal ? "WhatsApp" : "Instagram"} ↗</a></div>}</div>)}{messages.length===1&&<div className="quick-prompts">{prompts.map(prompt=><button key={prompt} onClick={()=>void ask(prompt)}>{prompt}</button>)}</div>}{loading&&<p className="message assistant">Retrieving the service guide…</p>}</div>
-      <form onSubmit={send}><input ref={inputRef} value={input} onChange={event=>setInput(event.target.value)} placeholder="Ask about services or pricing…" aria-label="Message the bridal concierge"/><button disabled={loading||!input.trim()}>Send</button></form>
-      <p className="chat-disclaimer">AI can explain services; Monika confirms availability and final quotes.</p>
+      <form onSubmit={send}><input ref={inputRef} value={input} onChange={event=>setInput(event.target.value)} placeholder="Ask about services or pricing…" aria-label={isBridal ? "Message the bridal concierge" : "Message the creative concierge"}/><button disabled={loading||!input.trim()}>Send</button></form>
+      <p className="chat-disclaimer">AI can explain services; {isBridal ? "Monika confirms availability and final quotes." : "Vani confirms customisation, timelines and final quotes."}</p>
     </section>}
     <button className="chat-launcher" onClick={()=>{setOpen(current=>!current);setTimeout(()=>inputRef.current?.focus(),50)}} aria-expanded={open}>{open?"Close":<><span>✦</span> Ask the {isBridal ? "bridal" : "creative"} concierge</>}</button>
   </aside>;

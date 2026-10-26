@@ -1,42 +1,34 @@
-# Monika Glam Up
+# Monika Glam Up — AI-enabled service platform
 
-A professional bridal and self-care website with transparent pricing, a portfolio, an AI concierge, private enquiries, public client reviews, Google Sheets storage, optional Telegram alerts, and MCP tools.
+> A production-style, multi-brand Next.js application for a bridal artist and a custom-art studio. It combines a polished customer journey with grounded AI assistance, operational workflows, and deliberate reliability controls.
 
-## What you still need to do
+[Live Monika Glam Up](https://monika-glamup.vercel.app/) · [Live Crafts by Vani](https://crafts-by-vani.vercel.app/) · [Public reviews](https://monika-glamup.vercel.app/reviews)
 
-- [ ] Replace your Apps Script project code with [the current script](docs/google-sheets-apps-script.gs).
-- [ ] Run `setupSheets` once so review IDs and the `Site Content` tab are created.
-- [ ] In Apps Script, choose **Deploy → Manage deployments → Edit → New version → Deploy**. Editing code alone does not update the live webhook.
-- [ ] Add `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` as GitHub Actions secrets. The deployment workflow passes them only to Monika; no duplicate Vercel maintenance is required.
-- [ ] Push this repository to `main` and wait for both Vercel deployments to finish.
-- [ ] Open `/api/health` on the Monika domain and confirm `google_sheets`, `gemini`, `telegram`, and `mcp` are all `true`.
-- [ ] Submit one test enquiry and confirm that it appears in the Sheet's `Enquiries` tab.
-- [ ] Submit one test review and confirm that it appears immediately on `/reviews`. No approval step is required.
-- [ ] Ask the concierge one question and confirm a useful answer appears.
+## Recruiter snapshot
 
-All listed secrets have already been added according to the project handoff. Do not commit their values to this repository.
+| Area | Evidence in this project |
+|---|---|
+| Product engineering | Two branded experiences are served from one Next.js codebase, with a safe bridal default and an explicit Crafts configuration. |
+| AI engineering | A retrieval-augmented concierge grounds Gemini responses in a curated service guide and falls back to deterministic answers when the provider is unavailable. |
+| Backend integration | Next.js route handlers coordinate Google Sheets, Telegram, Supabase Storage, an administrator dashboard, and an authenticated MCP tool surface. |
+| Reliability | Timeouts, input validation, health checks, safe secret handling, and “save before notify” ordering protect the core enquiry workflow. |
+| Delivery | GitHub Actions tests, builds, deploys both Vercel projects, and verifies each brand after deployment. |
 
-## Content maintenance
+## Product scope
 
-Use the [Monika Glam Up content guide](apps/web/MONIKA_GLAMUP_GUIDE.md) to replace the visible photos, update prices from one shared file, change the Instagram link, or update the logo.
+- Customer sites for **Monika Glam Up** and **Crafts by Vani**, including responsive light and dark themes.
+- Transparent service menus, a private enquiry flow, WhatsApp recovery path, and public client reviews.
+- A protected administrator dashboard to edit services, displayed prices, hero images, and reviews.
+- A self-care price guide with search and service-combination information.
+- An AI concierge that can explain published services without claiming availability or inventing a quote.
 
-## Included pages and features
+## Why this is more than a landing page
 
-- Monika Glam Up bridal home page with the supplied services and prices
-- Full rating summary, rating distribution, and every client comment at `/reviews`
-- Mamo Self Care menu, combos, transparent pricing, and private enquiry form at `/mamo-self-care`
-- Gemini-powered concierge grounded in the published service guide
-- Built-in answers for common service questions when the AI provider is briefly unavailable
-- Google Sheets as the operational store for enquiries and reviews
-- Optional Telegram alert after an enquiry is safely stored
-- Private administrator dashboard for services, prices, featured images and review deletion
-- MCP service-menu, concierge, and enquiry tools
+The project is designed around the full journey: visitors explore services, ask grounded questions, submit structured enquiries, and receive a clear fallback path when a notification dependency is slow. The business can manage content without editing source files, while operational data remains visible in Google Sheets.
 
-The public APIs and MCP endpoint are native Next.js route handlers inside `apps/web`. Vercel builds them from the repository root using the workspace build command. Supabase is not required for the production customer journey. The legacy FastAPI implementation remains as a compatibility/reference path.
+The public APIs and MCP endpoint are native Next.js route handlers inside `apps/web`. The production journey does not require Supabase; it is used only for optional protected image uploads. The legacy FastAPI implementation is kept as a compatibility/reference path.
 
 ## Engineering case study
-
-This project demonstrates more than frontend development. It combines a production-oriented AI workflow, MCP tools, serverless integrations, failure isolation, and operational diagnostics in a small-business application.
 
 ### Architecture
 
@@ -101,7 +93,7 @@ Tool calls never confirm availability. The enquiry tool stores the request befor
 | Secret handling | Gemini, MCP, Telegram, and webhook credentials remain server-side environment variables. |
 | MCP authentication | `X-MCP-Key` comparison uses a timing-safe equality check. |
 | Supply-chain control | The required `esbuild` install script is allowed only for the exact pinned version. |
-| Monorepo deployment | Both repository-root and `apps/web` Vercel build layouts are supported. |
+| Monorepo deployment | A single repository-root Vercel layout prevents duplicated output-directory paths. |
 
 ### Engineering skills demonstrated
 
@@ -125,6 +117,18 @@ The following are intentionally documented rather than claimed as completed:
 - external uptime checks and alerting;
 - vector retrieval if the knowledge corpus grows beyond the current curated guide.
 
+## Operations and content maintenance
+
+The non-code maintenance path is documented for a business owner in the [Monika Glam Up content guide](apps/web/MONIKA_GLAMUP_GUIDE.md): update visible photos, shared prices, social links, and the logo without searching through the application.
+
+Before a first production deployment:
+
+1. Add the Google Apps Script webhook and application secrets as GitHub Actions secrets.
+2. Run `setupSheets` in Apps Script once to create the `Enquiries`, `Reviews`, and `Site Content` tabs.
+3. Deploy a new Apps Script web-app version after changing its code.
+4. Push to `main`; the workflow tests, builds, deploys, and verifies both brands.
+5. Confirm `/api/health`, submit one test enquiry, and verify the Google Sheet entry.
+
 ## Google Sheets setup
 
 Google Sheets is the source of truth for enquiries, reviews and administrator-managed site content.
@@ -146,7 +150,7 @@ Google Sheets is the source of truth for enquiries, reviews and administrator-ma
    https://script.google.com/macros/s/DEPLOYMENT_ID/exec?key=YOUR_WEBHOOK_KEY
    ```
 
-7. Save that complete URL as `GOOGLE_SHEETS_WEBHOOK_URL` in GitHub Actions and Vercel.
+7. Save that complete URL as the `GOOGLE_SHEETS_WEBHOOK_URL` GitHub Actions secret.
 
 The script creates `Enquiries`, `Reviews` and `Site Content` tabs. It also adds stable IDs to existing reviews so an administrator can delete a selected review safely. Reviews are public immediately. The old `Approved` column remains for backward compatibility but is no longer used as a filter.
 
@@ -231,9 +235,7 @@ Both projects must deploy from the repository root. In **Settings → Build and 
 | Build Command | `npm run build:web` |
 | Output Directory | `apps/web/.next` |
 
-Do not set Root Directory to `apps/web`; doing so makes Vercel look for `apps/web/apps/web/.next`.
-
-For compatibility with older Vercel projects that still have Root Directory set to `apps/web`, `apps/web/vercel.json` uses `npm run build` and `.next`. The repository-root configuration remains the recommended layout, but either root setting now resolves to the correct output directory instead of duplicating the path.
+This repository uses one canonical Vercel layout. Do not set Root Directory to `apps/web`, because that duplicates the output path and causes Vercel to look for `apps/web/apps/web/.next`.
 
 ## Local development
 
